@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Procvičování rytmu</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 40px;
+}
+
+.controls {
+    margin-bottom: 30px;
+}
+
+#arrows {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.pair {
+    display: flex;
+    gap: 10px;
+}
+
+.arrow {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: 0.1s;
+}
+
+.arrow.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.arrow.current {
+    box-shadow: 0 0 15px red;
+    transform: scale(1.1);
+}
+
+select, button, input {
+    margin-left: 5px;
+    margin-right: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>Procvičování rytmu</h1>
+
+<div class="controls">
+    <label>
+        BPM:
+        <input type="number" id="bpm" value="120" min="40" max="300">
+    </label>
+
+    <button onclick="start()">Start</button>
+    <button onclick="stop()">Stop</button>
+
+    <br><br>
+
+    <label>
+        Přednastavené rytmy:
+        <select id="preset">
+            <option value="all8">Všechny osminy</option>
+            <option value="down8">Pouze downstroke</option>
+            <option value="rock1">Rock základ</option>
+            <option value="offbeat">Offbeat</option>
+            <option value="ska">Ska rytmus</option>
+            <option value="funk">Funk groove</option>
+        </select>
+    </label>
+
+    <button onclick="loadPreset()">Načíst rytmus</button>
+</div>
+
+<div id="arrows"></div>
+
+<script>
+const arrowsContainer = document.getElementById("arrows");
+let arrows = [];
+let interval = null;
+let currentIndex = 0;
+let audioCtx = null;
+
+// vytvoření 8 šipek
+for (let i = 0; i < 4; i++) {
+    const pair = document.createElement("div");
+    pair.className = "pair";
+
+    for (let j = 0; j < 2; j++) {
+        const arrow = document.createElement("div");
+        arrow.className = "arrow";
+        arrow.textContent = ((i * 2 + j) % 2 === 0) ? "↓" : "↑";
+
+        arrow.addEventListener("click", () => {
+            arrow.classList.toggle("active");
+        });
+
+        pair.appendChild(arrow);
+        arrows.push(arrow);
+    }
+
+    arrowsContainer.appendChild(pair);
+}
+
+// presety (1 = aktivní, 0 = neaktivní)
+const presets = {
+    all8:  [1,1,1,1,1,1,1,1],
+    down8: [1,0,1,0,1,0,1,0],
+    rock1: [1,0,1,1,1,0,1,1],
+    offbeat:[0,1,0,1,0,1,0,1],
+    ska:   [0,1,0,1,0,1,0,1],
+    funk:  [1,0,0,1,1,0,1,0]
+};
+
+function loadPreset() {
+    const selected = document.getElementById("preset").value;
+    const pattern = presets[selected];
+
+    arrows.forEach((arrow, index) => {
+        arrow.classList.remove("active");
+        if (pattern[index] === 1) {
+            arrow.classList.add("active");
+        }
+    });
+}
+
+// zvuk kliknutí
+function playClick(isStrongBeat = false) {
+    if (!audioCtx) return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = isStrongBeat ? 1200 : 800;
+    gain.gain.value = isStrongBeat ? 0.3 : 0.15;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+}
+
+function start() {
+    stop();
+
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const bpm = parseInt(document.getElementById("bpm").value);
+    const intervalTime = (60000 / bpm) / 2;
+
+    interval = setInterval(() => {
+        arrows.forEach(a => a.classList.remove("current"));
+        arrows[currentIndex].classList.add("current");
+
+        const isStrong = (currentIndex === 0 || currentIndex === 4);
+        playClick(isStrong);
+
+        currentIndex++;
+        if (currentIndex >= arrows.length) {
+            currentIndex = 0;
+        }
+
+    }, intervalTime);
+}
+
+function stop() {
+    if (interval) {
+        clearInterval(interval);
+        interval = null;
+    }
+    arrows.forEach(a => a.classList.remove("current"));
+    currentIndex = 0;
+}
+</script>
+
+</body>
+</html>
