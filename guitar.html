@@ -48,6 +48,16 @@ body {
     box-shadow: 0 0 15px red;
     transform: scale(1.1);
 }
+.arrow.down {
+    color: #1976d2;
+    border-color: #1976d2;
+}
+
+.arrow.down.active {
+    background-color: #1976d2;
+    color: white;
+}
+
 
 select, button, input {
     margin-left: 5px;
@@ -83,6 +93,29 @@ select, button, input {
     </label>
 
     <button onclick="loadPreset()">Načíst rytmus</button>
+    <br>
+    <label>
+    Zvuk:
+    <select id="soundType">
+        <option value="square">Square</option>
+        <option value="sine">Sine</option>
+        <option value="triangle">Triangle</option>
+        <option value="sawtooth">Sawtooth</option>
+        <option value="click">Click krátký</option>
+    </select>
+</label>
+
+<label>
+    Hlasitost:
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.2">
+</label>
+
+<br>
+
+<label>
+    <input type="checkbox" id="muteInactive" checked>
+    Vypnout zvuk u neaktivních šipek
+</label>
 </div>
 
 <div id="arrows"></div>
@@ -94,6 +127,57 @@ let interval = null;
 let currentIndex = 0;
 let audioCtx = null;
 
+// Funkce pro ukládání a načítání nastavení pomocí localStorage
+function saveSettings() {
+    try {
+        const settings = {
+            bpm: document.getElementById("bpm").value,
+            preset: document.getElementById("preset").value,
+            soundType: document.getElementById("soundType").value,
+            volume: document.getElementById("volume").value,
+            muteInactive: document.getElementById("muteInactive").checked,
+            arrowStates: arrows.map(arrow => arrow.classList.contains("active") ? 1 : 0)
+        };
+
+        localStorage.setItem("rhythmSettings", JSON.stringify(settings));
+        console.log("Nastavení uloženo:", settings);
+    } catch (e) {
+        console.error("Chyba při ukládání:", e);
+    }
+}
+
+function loadSettings() {
+    try {
+        const saved = localStorage.getItem("rhythmSettings");
+        if (!saved) {
+            console.log("Žádná uložená nastavení nenalezena");
+            return;
+        }
+
+        const settings = JSON.parse(saved);
+        console.log("Načítám nastavení:", settings);
+
+        if (settings.bpm) document.getElementById("bpm").value = settings.bpm;
+        if (settings.preset) document.getElementById("preset").value = settings.preset;
+        if (settings.soundType) document.getElementById("soundType").value = settings.soundType;
+        if (settings.volume) document.getElementById("volume").value = settings.volume;
+        if (settings.muteInactive !== undefined) document.getElementById("muteInactive").checked = settings.muteInactive;
+
+        if (settings.arrowStates && settings.arrowStates.length === arrows.length) {
+            arrows.forEach((arrow, index) => {
+                arrow.classList.remove("active");
+                if (settings.arrowStates[index] === 1) {
+                    arrow.classList.add("active");
+                }
+            });
+        }
+
+        console.log("Nastavení načteno úspěšně");
+    } catch (e) {
+        console.error("Chyba při načítání:", e);
+    }
+}
+
 // vytvoření 8 šipek
 for (let i = 0; i < 4; i++) {
     const pair = document.createElement("div");
@@ -102,10 +186,14 @@ for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 2; j++) {
         const arrow = document.createElement("div");
         arrow.className = "arrow";
-        arrow.textContent = ((i * 2 + j) % 2 === 0) ? "↓" : "↑";
+        const isDown = ((i * 2 + j) % 2 === 0);
+        arrow.textContent = isDown ? "↓" : "↑";
+        if (isDown) arrow.classList.add("down");
+
 
         arrow.addEventListener("click", () => {
             arrow.classList.toggle("active");
+            saveSettings();
         });
 
         pair.appendChild(arrow);
@@ -114,6 +202,22 @@ for (let i = 0; i < 4; i++) {
 
     arrowsContainer.appendChild(pair);
 }
+
+// Event listenery pro ukládání nastavení při změně
+document.getElementById("bpm").addEventListener("change", saveSettings);
+document.getElementById("bpm").addEventListener("input", saveSettings);
+document.getElementById("preset").addEventListener("change", saveSettings);
+document.getElementById("soundType").addEventListener("change", saveSettings);
+document.getElementById("volume").addEventListener("input", saveSettings);
+document.getElementById("muteInactive").addEventListener("change", saveSettings);
+
+// Načtení uložených nastavení při načtení stránky
+window.addEventListener("load", () => {
+    loadSettings();
+});
+
+// Načíst hned
+loadSettings();
 
 // presety (1 = aktivní, 0 = neaktivní)
 const presets = {
@@ -135,18 +239,41 @@ function loadPreset() {
             arrow.classList.add("active");
         }
     });
+
+    saveSettings();
 }
 
 // zvuk kliknutí
 function playClick(isStrongBeat = false) {
     if (!audioCtx) return;
 
+    const type = document.getElementById("soundType").value;
+    const volume = parseFloat(document.getElementById("volume").value);
+
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
-    osc.type = "square";
+    if (type === "click") {
+        // krátký perkusivní klik
+        const buffer = audioCtx.createBuffer(1, 4410, 44100);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        gain.gain.value = volume * (isStrongBeat ? 1 : 0.6);
+
+        noise.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+        return;
+    }
+
+    osc.type = type;
     osc.frequency.value = isStrongBeat ? 1200 : 800;
-    gain.gain.value = isStrongBeat ? 0.3 : 0.15;
+    gain.gain.value = volume * (isStrongBeat ? 1 : 0.6);
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -154,6 +281,7 @@ function playClick(isStrongBeat = false) {
     osc.start();
     osc.stop(audioCtx.currentTime + 0.05);
 }
+
 
 function start() {
     stop();
@@ -169,8 +297,14 @@ function start() {
         arrows.forEach(a => a.classList.remove("current"));
         arrows[currentIndex].classList.add("current");
 
-        const isStrong = (currentIndex === 0 || currentIndex === 4);
-        playClick(isStrong);
+        const muteInactive = document.getElementById("muteInactive").checked;
+        const isActive = arrows[currentIndex].classList.contains("active");
+
+        // Přehrát zvuk pouze pokud je šipka aktivní, nebo pokud není zapnuté ztlumení neaktivních
+        if (isActive || !muteInactive) {
+            const isStrong = (currentIndex === 0 || currentIndex === 4);
+            playClick(isStrong);
+        }
 
         currentIndex++;
         if (currentIndex >= arrows.length) {
