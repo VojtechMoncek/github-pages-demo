@@ -277,19 +277,19 @@ input[type="checkbox"] {
     h1 {
         font-size: 1.5em;
     }
-
+    
     .control-row {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
     }
-
+    
     .arrow {
         width: 55px;
         height: 55px;
         font-size: 26px;
     }
-
+    
     input[type="range"] {
         width: 100%;
     }
@@ -360,6 +360,7 @@ input[type="checkbox"] {
             <div class="control-group">
                 <label>Rytmus:</label>
                 <select id="preset">
+                    <option value="none" selected>Nevybráno</option>
                     <option value="empty">Prázdný</option>
                     <option value="all8">Všechny osminy</option>
                     <option value="down8">Pouze downstroke</option>
@@ -368,7 +369,6 @@ input[type="checkbox"] {
                     <option value="ska">Ska</option>
                     <option value="funk">Funk</option>
                 </select>
-                <button class="btn-secondary" onclick="loadPreset()">Načíst</button>
                 <button class="btn-secondary" onclick="randomRhythm()">Náhodný</button>
             </div>
         </div>
@@ -494,24 +494,24 @@ function loadSettings() {
 
 function updateTimeSignature(skipSave = false) {
     const wasRunning = interval !== null;
-
+    
     // Zastavit pokud běží
     if (wasRunning) {
         stop();
     }
-
+    
     beatsPerMeasure = parseInt(document.getElementById("beatsPerMeasure").value);
     beatValue = parseInt(document.getElementById("beatValue").value);
     subdivision = parseInt(document.getElementById("subdivision").value);
-
+    
     totalArrows = beatsPerMeasure * subdivision;
-
+    
     renderArrows();
-
+    
     if (!skipSave) {
         saveSettings();
     }
-
+    
     // Automaticky spustit znovu pokud běželo
     if (wasRunning) {
         start();
@@ -520,14 +520,14 @@ function updateTimeSignature(skipSave = false) {
 
 function updateBPM(value) {
     const wasRunning = interval !== null;
-
+    
     // Aktualizovat všechny BPM prvky
     document.getElementById("bpm").value = value;
     document.getElementById("bpmSlider").value = value;
     document.getElementById("bpmDisplay").textContent = value;
-
+    
     saveSettings();
-
+    
     // Pokud metronomu běží, restartovat s novým tempem
     if (wasRunning) {
         start();
@@ -537,10 +537,10 @@ function updateBPM(value) {
 function renderArrows() {
     // Uložit stavy před vymazáním
     const oldStates = arrows.map(arrow => arrow.classList.contains("active") ? 1 : 0);
-
+    
     arrowsContainer.innerHTML = "";
     arrows = [];
-
+    
     for (let i = 0; i < Math.ceil(totalArrows / 2); i++) {
         const pair = document.createElement("div");
         pair.className = "pair";
@@ -548,7 +548,7 @@ function renderArrows() {
         for (let j = 0; j < 2; j++) {
             const index = i * 2 + j;
             if (index >= totalArrows) break;
-
+            
             const arrow = document.createElement("div");
             arrow.className = "arrow";
             const isDown = (index % 2 === 0);
@@ -567,6 +567,8 @@ function renderArrows() {
 
             arrow.addEventListener("click", () => {
                 arrow.classList.toggle("active");
+                // Po manuální změně nastavit preset na "Nevybráno"
+                document.getElementById("preset").value = "none";
                 saveSettings();
             });
 
@@ -619,8 +621,14 @@ const presets = {
 
 function loadPreset() {
     const selected = document.getElementById("preset").value;
+    
+    // Pokud je vybrána možnost "Nevybráno", nic neděláme
+    if (selected === "none") {
+        return;
+    }
+    
     let pattern = presets[selected];
-
+    
     // Přizpůsobit pattern aktuálnímu počtu šipek
     if (pattern.length < totalArrows) {
         // Opakovat pattern pokud je kratší
@@ -649,7 +657,10 @@ function randomRhythm() {
             arrow.classList.add("active");
         }
     });
-
+    
+    // Nastavit preset na "Nevybráno" po vygenerování náhodného rytmu
+    document.getElementById("preset").value = "none";
+    
     saveSettings();
 }
 
@@ -702,17 +713,17 @@ function start() {
     }
 
     const bpm = parseInt(document.getElementById("bpm").value);
-
+    
     // Vypočítat interval podle hodnoty doby a subdivize
     let baseInterval = 60000 / bpm; // interval pro jednu dobu
-
+    
     // Přizpůsobit podle hodnoty doby
     if (beatValue === 8) {
         baseInterval = baseInterval / 2;
     } else if (beatValue === 16) {
         baseInterval = baseInterval / 4;
     }
-
+    
     // Rozdělit podle subdivize
     const intervalTime = baseInterval / subdivision;
 
