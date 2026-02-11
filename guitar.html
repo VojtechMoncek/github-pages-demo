@@ -4,121 +4,414 @@
 <meta charset="UTF-8">
 <title>Procvičování rytmu</title>
 <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f7fa;
+    min-height: 100vh;
+    padding: 20px;
+    color: #2c3e50;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+h1 {
     text-align: center;
-    margin-top: 40px;
+    color: #2c3e50;
+    font-size: 2em;
+    margin-bottom: 25px;
+    font-weight: 600;
 }
 
 .controls {
-    margin-bottom: 30px;
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e8ecef;
+}
+
+.control-row {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.control-row:last-child {
+    margin-bottom: 0;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    color: #4a5568;
+    white-space: nowrap;
+}
+
+.divider {
+    height: 1px;
+    background: #e8ecef;
+    margin: 15px 0;
+}
+
+.bpm-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9em;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+}
+
+select:hover {
+    border-color: #3b82f6;
+}
+
+select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.btn-start {
+    background: #10b981;
+    color: white;
+}
+
+.btn-start:hover {
+    background: #059669;
+}
+
+.btn-stop {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-stop:hover {
+    background: #dc2626;
+}
+
+.btn-secondary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #2563eb;
+}
+
+input[type="number"] {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9em;
+    width: 75px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+input[type="number"]:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 200px;
+    height: 6px;
+    border-radius: 3px;
+    background: #e5e7eb;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    background: #2563eb;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3b82f6;
 }
 
 #arrows {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 30px 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e8ecef;
 }
 
 .pair {
     display: flex;
-    gap: 10px;
+    gap: 6px;
 }
 
 .arrow {
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
     font-size: 30px;
-    border: 2px solid #333;
+    border: 2px solid #d1d5db;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     user-select: none;
-    transition: 0.1s;
+    transition: all 0.15s ease;
+    background: white;
+    font-weight: bold;
+}
+
+.arrow:hover {
+    transform: scale(1.05);
+    border-color: #3b82f6;
 }
 
 .arrow.active {
-    background-color: #4CAF50;
+    background: #10b981;
     color: white;
+    border-color: #10b981;
 }
 
 .arrow.current {
-    box-shadow: 0 0 15px red;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4);
     transform: scale(1.1);
+    z-index: 10;
 }
+
 .arrow.down {
-    color: #1976d2;
-    border-color: #1976d2;
+    color: #3b82f6;
 }
 
 .arrow.down.active {
-    background-color: #1976d2;
+    background: #3b82f6;
     color: white;
+    border-color: #3b82f6;
 }
 
+.arrow.beat-marker {
+    border-color: #f59e0b;
+    border-width: 3px;
+}
 
-select, button, input {
-    margin-left: 5px;
-    margin-right: 10px;
+.arrow.beat-marker.active {
+    border-color: #fbbf24;
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.5em;
+    }
+
+    .control-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .arrow {
+        width: 55px;
+        height: 55px;
+        font-size: 26px;
+    }
+
+    input[type="range"] {
+        width: 100%;
+    }
 }
 </style>
 </head>
 <body>
 
-<h1>Procvičování rytmu</h1>
+<div class="container">
+    <h1>Procvičování rytmu</h1>
 
-<div class="controls">
-    <label>
-        BPM:
-        <input type="number" id="bpm" value="120" min="40" max="300">
-    </label>
+    <div class="controls">
+        <!-- Tempo a ovládání -->
+        <div class="control-row">
+            <div class="bpm-section">
+                <label>BPM:</label>
+                <input type="number" id="bpm" value="120" min="40" max="300">
+                <input type="range" id="bpmSlider" min="40" max="300" value="120">
+                <span id="bpmDisplay" style="font-weight: 600; color: #3b82f6; min-width: 45px; display: inline-block;">120</span>
+            </div>
+            <button class="btn-start" onclick="start()">Start</button>
+            <button class="btn-stop" onclick="stop()">Stop</button>
+        </div>
 
-    <button onclick="start()">Start</button>
-    <button onclick="stop()">Stop</button>
+        <div class="divider"></div>
 
-    <br><br>
+        <!-- Taktové označení -->
+        <div class="control-row">
+            <div class="control-group">
+                <label>
+                    <span>Doby:</span>
+                    <select id="beatsPerMeasure">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4" selected>4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
+                </label>
+            </div>
+            <div class="control-group">
+                <label>
+                    <span>Hodnota:</span>
+                    <select id="beatValue">
+                        <option value="4" selected>1/4</option>
+                        <option value="8">1/8</option>
+                        <option value="16">1/16</option>
+                    </select>
+                </label>
+            </div>
+            <div class="control-group">
+                <label>
+                    <span>Subdivize:</span>
+                    <select id="subdivision">
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </label>
+            </div>
+        </div>
 
-    <label>
-        Přednastavené rytmy:
-        <select id="preset">
-            <option value="all8">Všechny osminy</option>
-            <option value="down8">Pouze downstroke</option>
-            <option value="rock1">Rock základ</option>
-            <option value="offbeat">Offbeat</option>
-            <option value="ska">Ska rytmus</option>
-            <option value="funk">Funk groove</option>
-        </select>
-    </label>
+        <div class="divider"></div>
 
-    <button onclick="loadPreset()">Načíst rytmus</button>
-    <br>
-    <label>
-    Zvuk:
-    <select id="soundType">
-        <option value="square">Square</option>
-        <option value="sine">Sine</option>
-        <option value="triangle">Triangle</option>
-        <option value="sawtooth">Sawtooth</option>
-        <option value="click">Click krátký</option>
-    </select>
-</label>
+        <!-- Přednastavené rytmy -->
+        <div class="control-row">
+            <div class="control-group">
+                <label>Rytmus:</label>
+                <select id="preset">
+                    <option value="empty">Prázdný</option>
+                    <option value="all8">Všechny osminy</option>
+                    <option value="down8">Pouze downstroke</option>
+                    <option value="rock1">Rock základ</option>
+                    <option value="offbeat">Offbeat</option>
+                    <option value="ska">Ska</option>
+                    <option value="funk">Funk</option>
+                </select>
+                <button class="btn-secondary" onclick="loadPreset()">Načíst</button>
+                <button class="btn-secondary" onclick="randomRhythm()">Náhodný</button>
+            </div>
+        </div>
 
-<label>
-    Hlasitost:
-    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.2">
-</label>
+        <div class="divider"></div>
 
-<br>
+        <!-- Nastavení zvuku -->
+        <div class="control-row">
+            <div class="control-group">
+                <label>
+                    <span>Zvuk:</span>
+                    <select id="soundType">
+                        <option value="click">Click</option>
+                        <option value="square">Square</option>
+                        <option value="sine">Sine</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="sawtooth">Sawtooth</option>
+                    </select>
+                </label>
+            </div>
+            <div class="control-group">
+                <label>
+                    <span>Hlasitost:</span>
+                    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.2">
+                </label>
+            </div>
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="muteInactive" checked>
+                    <span>Ztlumit neaktivní</span>
+                </label>
+            </div>
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="accentBeats" checked>
+                    <span>Zvýraznit začátky dob</span>
+                </label>
+            </div>
+        </div>
+    </div>
 
-<label>
-    <input type="checkbox" id="muteInactive" checked>
-    Vypnout zvuk u neaktivních šipek
-</label>
+    <div id="arrows"></div>
 </div>
-
-<div id="arrows"></div>
 
 <script>
 const arrowsContainer = document.getElementById("arrows");
@@ -126,6 +419,10 @@ let arrows = [];
 let interval = null;
 let currentIndex = 0;
 let audioCtx = null;
+let beatsPerMeasure = 4;
+let beatValue = 4;
+let subdivision = 2;
+let totalArrows = 8;
 
 // Funkce pro ukládání a načítání nastavení pomocí localStorage
 function saveSettings() {
@@ -136,6 +433,10 @@ function saveSettings() {
             soundType: document.getElementById("soundType").value,
             volume: document.getElementById("volume").value,
             muteInactive: document.getElementById("muteInactive").checked,
+            accentBeats: document.getElementById("accentBeats").checked,
+            beatsPerMeasure: document.getElementById("beatsPerMeasure").value,
+            beatValue: document.getElementById("beatValue").value,
+            subdivision: document.getElementById("subdivision").value,
             arrowStates: arrows.map(arrow => arrow.classList.contains("active") ? 1 : 0)
         };
 
@@ -157,11 +458,24 @@ function loadSettings() {
         const settings = JSON.parse(saved);
         console.log("Načítám nastavení:", settings);
 
-        if (settings.bpm) document.getElementById("bpm").value = settings.bpm;
+        if (settings.bpm) {
+            document.getElementById("bpm").value = settings.bpm;
+            document.getElementById("bpmSlider").value = settings.bpm;
+            document.getElementById("bpmDisplay").textContent = settings.bpm;
+        }
         if (settings.preset) document.getElementById("preset").value = settings.preset;
         if (settings.soundType) document.getElementById("soundType").value = settings.soundType;
         if (settings.volume) document.getElementById("volume").value = settings.volume;
         if (settings.muteInactive !== undefined) document.getElementById("muteInactive").checked = settings.muteInactive;
+        if (settings.accentBeats !== undefined) document.getElementById("accentBeats").checked = settings.accentBeats;
+        if (settings.beatsPerMeasure) document.getElementById("beatsPerMeasure").value = settings.beatsPerMeasure;
+        if (settings.beatValue) document.getElementById("beatValue").value = settings.beatValue;
+        if (settings.subdivision) document.getElementById("subdivision").value = settings.subdivision;
+
+        // Aplikovat taktové označení před načtením stavů šipek
+        if (settings.beatsPerMeasure || settings.beatValue || settings.subdivision) {
+            updateTimeSignature(true); // true = nerenderovat znovu, jen nastavit hodnoty
+        }
 
         if (settings.arrowStates && settings.arrowStates.length === arrows.length) {
             arrows.forEach((arrow, index) => {
@@ -178,38 +492,111 @@ function loadSettings() {
     }
 }
 
-// vytvoření 8 šipek
-for (let i = 0; i < 4; i++) {
-    const pair = document.createElement("div");
-    pair.className = "pair";
+function updateTimeSignature(skipSave = false) {
+    const wasRunning = interval !== null;
 
-    for (let j = 0; j < 2; j++) {
-        const arrow = document.createElement("div");
-        arrow.className = "arrow";
-        const isDown = ((i * 2 + j) % 2 === 0);
-        arrow.textContent = isDown ? "↓" : "↑";
-        if (isDown) arrow.classList.add("down");
-
-
-        arrow.addEventListener("click", () => {
-            arrow.classList.toggle("active");
-            saveSettings();
-        });
-
-        pair.appendChild(arrow);
-        arrows.push(arrow);
+    // Zastavit pokud běží
+    if (wasRunning) {
+        stop();
     }
 
-    arrowsContainer.appendChild(pair);
+    beatsPerMeasure = parseInt(document.getElementById("beatsPerMeasure").value);
+    beatValue = parseInt(document.getElementById("beatValue").value);
+    subdivision = parseInt(document.getElementById("subdivision").value);
+
+    totalArrows = beatsPerMeasure * subdivision;
+
+    renderArrows();
+
+    if (!skipSave) {
+        saveSettings();
+    }
+
+    // Automaticky spustit znovu pokud běželo
+    if (wasRunning) {
+        start();
+    }
 }
 
+function updateBPM(value) {
+    const wasRunning = interval !== null;
+
+    // Aktualizovat všechny BPM prvky
+    document.getElementById("bpm").value = value;
+    document.getElementById("bpmSlider").value = value;
+    document.getElementById("bpmDisplay").textContent = value;
+
+    saveSettings();
+
+    // Pokud metronomu běží, restartovat s novým tempem
+    if (wasRunning) {
+        start();
+    }
+}
+
+function renderArrows() {
+    // Uložit stavy před vymazáním
+    const oldStates = arrows.map(arrow => arrow.classList.contains("active") ? 1 : 0);
+
+    arrowsContainer.innerHTML = "";
+    arrows = [];
+
+    for (let i = 0; i < Math.ceil(totalArrows / 2); i++) {
+        const pair = document.createElement("div");
+        pair.className = "pair";
+
+        for (let j = 0; j < 2; j++) {
+            const index = i * 2 + j;
+            if (index >= totalArrows) break;
+
+            const arrow = document.createElement("div");
+            arrow.className = "arrow";
+            const isDown = (index % 2 === 0);
+            arrow.textContent = isDown ? "↓" : "↑";
+            if (isDown) arrow.classList.add("down");
+
+            // Označit začátky dob
+            if (index % subdivision === 0) {
+                arrow.classList.add("beat-marker");
+            }
+
+            // Obnovit stavy pokud možno
+            if (index < oldStates.length && oldStates[index] === 1) {
+                arrow.classList.add("active");
+            }
+
+            arrow.addEventListener("click", () => {
+                arrow.classList.toggle("active");
+                saveSettings();
+            });
+
+            pair.appendChild(arrow);
+            arrows.push(arrow);
+        }
+
+        arrowsContainer.appendChild(pair);
+    }
+}
+
+// Inicializace
+renderArrows();
+
 // Event listenery pro ukládání nastavení při změně
-document.getElementById("bpm").addEventListener("change", saveSettings);
-document.getElementById("bpm").addEventListener("input", saveSettings);
-document.getElementById("preset").addEventListener("change", saveSettings);
+document.getElementById("bpm").addEventListener("change", (e) => updateBPM(e.target.value));
+document.getElementById("bpm").addEventListener("input", (e) => updateBPM(e.target.value));
+document.getElementById("bpmSlider").addEventListener("input", (e) => updateBPM(e.target.value));
+document.getElementById("preset").addEventListener("change", () => {
+    loadPreset();
+});
 document.getElementById("soundType").addEventListener("change", saveSettings);
 document.getElementById("volume").addEventListener("input", saveSettings);
 document.getElementById("muteInactive").addEventListener("change", saveSettings);
+document.getElementById("accentBeats").addEventListener("change", saveSettings);
+
+// Automaticky aplikovat změny taktového označení
+document.getElementById("beatsPerMeasure").addEventListener("change", () => updateTimeSignature());
+document.getElementById("beatValue").addEventListener("change", () => updateTimeSignature());
+document.getElementById("subdivision").addEventListener("change", () => updateTimeSignature());
 
 // Načtení uložených nastavení při načtení stránky
 window.addEventListener("load", () => {
@@ -221,6 +608,7 @@ loadSettings();
 
 // presety (1 = aktivní, 0 = neaktivní)
 const presets = {
+    empty: [0,0,0,0,0,0,0,0],
     all8:  [1,1,1,1,1,1,1,1],
     down8: [1,0,1,0,1,0,1,0],
     rock1: [1,0,1,1,1,0,1,1],
@@ -231,11 +619,33 @@ const presets = {
 
 function loadPreset() {
     const selected = document.getElementById("preset").value;
-    const pattern = presets[selected];
+    let pattern = presets[selected];
+
+    // Přizpůsobit pattern aktuálnímu počtu šipek
+    if (pattern.length < totalArrows) {
+        // Opakovat pattern pokud je kratší
+        const repeated = [];
+        for (let i = 0; i < totalArrows; i++) {
+            repeated.push(pattern[i % pattern.length]);
+        }
+        pattern = repeated;
+    }
 
     arrows.forEach((arrow, index) => {
         arrow.classList.remove("active");
-        if (pattern[index] === 1) {
+        if (index < pattern.length && pattern[index] === 1) {
+            arrow.classList.add("active");
+        }
+    });
+
+    saveSettings();
+}
+
+function randomRhythm() {
+    arrows.forEach(arrow => {
+        arrow.classList.remove("active");
+        // 50% šance že bude aktivní
+        if (Math.random() > 0.5) {
             arrow.classList.add("active");
         }
     });
@@ -244,11 +654,12 @@ function loadPreset() {
 }
 
 // zvuk kliknutí
-function playClick(isStrongBeat = false) {
+function playClick(isBeatStart = false) {
     if (!audioCtx) return;
 
     const type = document.getElementById("soundType").value;
     const volume = parseFloat(document.getElementById("volume").value);
+    const accentBeats = document.getElementById("accentBeats").checked;
 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -263,7 +674,7 @@ function playClick(isStrongBeat = false) {
         const noise = audioCtx.createBufferSource();
         noise.buffer = buffer;
 
-        gain.gain.value = volume * (isStrongBeat ? 1 : 0.6);
+        gain.gain.value = volume * (isBeatStart && accentBeats ? 1.2 : 0.6);
 
         noise.connect(gain);
         gain.connect(audioCtx.destination);
@@ -272,8 +683,8 @@ function playClick(isStrongBeat = false) {
     }
 
     osc.type = type;
-    osc.frequency.value = isStrongBeat ? 1200 : 800;
-    gain.gain.value = volume * (isStrongBeat ? 1 : 0.6);
+    osc.frequency.value = (isBeatStart && accentBeats) ? 1200 : 800;
+    gain.gain.value = volume * ((isBeatStart && accentBeats) ? 1 : 0.6);
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -291,7 +702,19 @@ function start() {
     }
 
     const bpm = parseInt(document.getElementById("bpm").value);
-    const intervalTime = (60000 / bpm) / 2;
+
+    // Vypočítat interval podle hodnoty doby a subdivize
+    let baseInterval = 60000 / bpm; // interval pro jednu dobu
+
+    // Přizpůsobit podle hodnoty doby
+    if (beatValue === 8) {
+        baseInterval = baseInterval / 2;
+    } else if (beatValue === 16) {
+        baseInterval = baseInterval / 4;
+    }
+
+    // Rozdělit podle subdivize
+    const intervalTime = baseInterval / subdivision;
 
     interval = setInterval(() => {
         arrows.forEach(a => a.classList.remove("current"));
@@ -302,8 +725,8 @@ function start() {
 
         // Přehrát zvuk pouze pokud je šipka aktivní, nebo pokud není zapnuté ztlumení neaktivních
         if (isActive || !muteInactive) {
-            const isStrong = (currentIndex === 0 || currentIndex === 4);
-            playClick(isStrong);
+            const isBeatStart = (currentIndex % subdivision === 0);
+            playClick(isBeatStart);
         }
 
         currentIndex++;
