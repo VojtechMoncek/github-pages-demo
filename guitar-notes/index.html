@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Note Master</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Guitar Note Master</h1>
+            <p class="subtitle">Master the fretboard</p>
+        </header>
+
+        <main>
+            <section class="controls-panel card glass">
+                <div class="mode-selector">
+                    <label for="practice-mode">Mode:</label>
+                    <select id="practice-mode">
+                        <option value="interactive">Interactive (Click Fretboard)</option>
+                        <option value="real-guitar">Real Guitar (Auto-Highlight)</option>
+                    </select>
+                </div>
+                
+                <div id="real-guitar-controls" class="sub-controls hidden">
+                    <label for="speed-slider">Auto-advance speed:</label>
+                    <input type="range" id="speed-slider" min="1" max="10" value="5">
+                    <span id="speed-display">3s</span>
+                </div>
+                
+                <div class="game-controls">
+                    <button id="settings-btn" class="btn secondary">Settings</button>
+                    <button id="start-btn" class="btn primary">Start Practice</button>
+                    <button id="stop-btn" class="btn danger hidden">Stop</button>
+                </div>
+            </section>
+
+            <section id="settings-panel" class="settings-panel card glass hidden">
+                <h3>Practice Settings</h3>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label>Fret Range:</label>
+                        <div class="range-inputs">
+                            <input type="number" id="min-fret" min="0" max="12" value="0">
+                            <span>to</span>
+                            <input type="number" id="max-fret" min="0" max="12" value="12">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Strings:</label>
+                        <div class="checkbox-group" id="string-filters">
+                            <label><input type="checkbox" value="0" checked> High E (1)</label>
+                            <label><input type="checkbox" value="1" checked> B (2)</label>
+                            <label><input type="checkbox" value="2" checked> G (3)</label>
+                            <label><input type="checkbox" value="3" checked> D (4)</label>
+                            <label><input type="checkbox" value="4" checked> A (5)</label>
+                            <label><input type="checkbox" value="5" checked> Low E (6)</label>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>Written Notes to Practice on Staff:</label>
+                        <div class="checkbox-group notes-group" id="note-filters">
+                            <label><input type="checkbox" value="C" checked> C</label>
+                            <label><input type="checkbox" value="C#" checked> C#</label>
+                            <label><input type="checkbox" value="D" checked> D</label>
+                            <label><input type="checkbox" value="D#" checked> D#</label>
+                            <label><input type="checkbox" value="E" checked> E</label>
+                            <label><input type="checkbox" value="F" checked> F</label>
+                            <label><input type="checkbox" value="F#" checked> F#</label>
+                            <label><input type="checkbox" value="G" checked> G</label>
+                            <label><input type="checkbox" value="G#" checked> G#</label>
+                            <label><input type="checkbox" value="A" checked> A</label>
+                            <label><input type="checkbox" value="A#" checked> A#</label>
+                            <label><input type="checkbox" value="A#" checked> A#</label>
+                            <label><input type="checkbox" value="B" checked> B</label>
+                        </div>
+                    </div>
+
+                    <div class="setting-group" style="grid-column: 1 / -1;">
+                        <label>Or Exact Notes (Comma-separated, e.g. "E3, F3, G#4"):</label>
+                        <input type="text" id="custom-note-list" placeholder="Leave blank to use filters above" style="width: 100%; max-width: 400px; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid var(--surface-border); color: white; border-radius: 4px;">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Standard tuning range: E3 to E6</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="display-panel">
+                <div class="target-note-container card glass">
+                    <h2>Find This Note</h2>
+                    <div id="target-note" class="staff-container">
+                        <div class="staff-lines">
+                            <div class="staff-line"></div>
+                            <div class="staff-line"></div>
+                            <div class="staff-line"></div>
+                            <div class="staff-line"></div>
+                            <div class="staff-line"></div>
+                        </div>
+                        <div class="treble-clef">&#119070;</div>
+                        <div id="note-head" class="note-head hidden"></div>
+                        <!-- Sharp sign if needed -->
+                        <div id="accidental" class="accidental hidden">#</div>
+                    </div>
+                    <div id="note-name-overlay" class="note-name-overlay">--</div>
+                </div>
+
+                <div id="score-board" class="score-container card glass">
+                    <div class="score-item">
+                        <span class="label">Score</span>
+                        <span id="score" class="value">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="label">Accuracy</span>
+                        <span id="accuracy" class="value">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="fretboard-section">
+                <div class="fretboard-wrapper">
+                    <div id="fretboard" class="fretboard disabled">
+                        <!-- Fretboard generated by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
