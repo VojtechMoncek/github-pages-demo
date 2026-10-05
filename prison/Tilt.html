@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TILT</title>
+<style>
+:root{--bg:#1c1f22;--panel:#272b2f;--line:#3b4147;--tx:#e8e4da;--mut:#9a9a92;--ok:#6fbf73;--bad:#e0644f;--acc:#e3b341;
+ --fs:clamp(8px,min(2.4vw,1.9vh),14px);--cfs:clamp(11px,min(3.2vw,2.5vh),17px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{height:100vh;height:100dvh;background:var(--bg);color:var(--tx);font:15px/1.25 "Trebuchet MS",Verdana,sans-serif;padding:6px;display:flex;flex-direction:column;gap:6px;-webkit-user-select:none;user-select:none}
+button,select{font:inherit;color:var(--tx);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--acc)}
+button.on{background:var(--acc);color:#1c1f22;border-color:var(--acc)}
+.top{display:flex;gap:6px;align-items:center;flex:none}
+h1{font:700 18px "Courier New",monospace;margin:0 6px 0 0;letter-spacing:1px}
+.stat{margin-left:auto;color:var(--mut);font-size:13px;text-align:right}
+.photo{width:100%;height:100%;object-fit:cover;object-position:top;border-radius:5px;background:#111;display:flex;align-items:center;justify-content:center;font:700 clamp(12px,3vw,26px) "Courier New",monospace;color:var(--mut)}
+[hidden]{display:none!important}
+
+/* Režim 1 – vše na jednu obrazovku */
+#quiz{flex:1;min-height:0;width:100%;max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+#qphoto{flex:1;min-height:0;display:flex;justify-content:center}
+#qphoto .photo{width:auto;max-width:100%;aspect-ratio:1}
+#quiz select{width:100%;flex:none}
+select.ok{border-color:var(--ok)}select.bad{border-color:var(--bad)}
+.fix{font-size:13px;color:var(--ok);min-height:1.25em;flex:none;text-align:center}
+#quiz .row{display:flex;gap:6px;flex:none}#quiz .row button{flex:1;padding:10px}
+
+/* Režim 2 – mřížka 2×5 zůstává vždy pohromadě */
+#dnd{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.grid{flex:1 1 62%;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(3px,1vw,10px)}
+.cell{min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:clamp(2px,.6vw,6px);display:grid;grid-template-rows:minmax(0,1fr) auto auto auto;align-content:stretch;gap:clamp(2px,.5vw,5px)}
+.zone{position:relative;min-height:0;border:1px dashed var(--line);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:var(--fs);color:var(--mut);text-align:center;overflow:hidden;overflow-wrap:anywhere;line-height:1.15}
+.zone:not([data-t=photo]){min-height:2.3em}
+.zone[data-t=photo]{min-height:48px}
+.zone.ok{border:1px solid var(--ok)}.zone.over{border-color:var(--acc)}
+.zone.bad{animation:sh .3s;border-color:var(--bad)}
+@keyframes sh{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+#pool{flex:1 1 34%;min-height:0;overflow:auto;display:flex;flex-wrap:wrap;align-content:flex-start;gap:5px;padding:6px;border:1px solid var(--line);border-radius:6px}
+.chip{background:#33393f;border:1px solid var(--line);border-radius:4px;padding:6px 10px;cursor:grab;font-size:var(--cfs);line-height:1.15}
+.chip[data-t=photo]{width:clamp(38px,min(10vw,8.5vh),72px);height:clamp(38px,min(10vw,8.5vh),72px);padding:0;overflow:hidden}
+.chip[data-t=num]{font-family:"Courier New",monospace;font-weight:700;color:var(--acc)}
+.chip[data-t=nick]{font-style:italic}
+.chip.sel{outline:2px solid var(--acc)}
+.zone .chip[data-t]{border:0;background:none;cursor:default;width:100%;height:100%;padding:1px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:var(--fs)}
+.zone .chip[data-t=photo]{position:absolute;inset:0;padding:0}
+.zone .chip[data-t=photo] .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;margin:auto}
+.chip .photo{font-size:inherit}
+@media (min-width:900px){body{padding:12px;font-size:16px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>TILT</h1>
+  <button id="b1" class="on">Poznej</button>
+  <button id="b2">Přetahuj</button>
+  <button id="again" hidden>Znovu</button>
+  <span class="stat" id="stat"></span>
+</div>
+
+<div id="quiz" hidden>
+  <div id="qphoto"></div>
+  <select id="sNum"></select>
+  <select id="sNick"></select>
+  <select id="sName"></select>
+  <div class="fix" id="fix"></div>
+  <div class="row"><button id="check">Zkontrolovat</button><button id="next">Další</button></div>
+</div>
+
+<div id="dnd" hidden>
+  <div class="grid" id="grid"></div>
+  <div id="pool"></div>
+</div>
+
+<script>
+const ROWS=[
+ {f:2,num:[2121,2123,2125,2127,2129],nick:["Powder","Hot Water","The IPA","The Mountain","The Mole"],name:["Josie Erwin","Tillie Olsen","Terry Cross","Matt Holmes","Russ Hayes"]},
+ {f:1,num:[1121,1123,1125,1127,1129],nick:["Codebreaker","Raspberry","The banker","Loadmaster","MacGyver"],name:["Glenn Berger","Lewis Bergin","Lila Holmes","Roscoe Eckhart","Teddy Turner"]}
+];
+const P=[];
+ROWS.forEach(r=>r.num.forEach((n,i)=>P.push({id:""+r.f+(i+1),num:""+n,nick:r.nick[i],name:r.name[i]})));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const $=id=>document.getElementById(id);
+function photo(id){
+  const i=new Image();i.className="photo";i.alt=id;i.draggable=false;
+  i.src="prisoners/"+id+".jpg";
+  i.onerror=()=>{const d=document.createElement("div");d.className="photo";d.textContent=id;i.replaceWith(d)};
+  return i;
+}
+let cm=1;
+function mode(m){
+  cm=m;$("quiz").hidden=m!=1;$("dnd").hidden=m!=2;$("again").hidden=m!=2;
+  $("b1").classList.toggle("on",m==1);$("b2").classList.toggle("on",m==2);
+  m==1?startQuiz():startDnd();
+}
+$("b1").onclick=()=>mode(1);$("b2").onclick=()=>mode(2);
+
+// ---- Režim 1 ----
+let queue=[],cur=null,ok=0,tot=0,checked=false;
+function fill(sel,ph,vals){sel.innerHTML=`<option value="">${ph}</option>`+vals.map(v=>`<option>${v}</option>`).join("")}
+const S=[["sNum","num"],["sNick","nick"],["sName","name"]];
+function startQuiz(){
+  fill($("sNum"),"Číslo cely…",P.map(p=>p.num).sort());
+  fill($("sNick"),"Přezdívka…",P.map(p=>p.nick).sort((a,b)=>a.localeCompare(b)));
+  fill($("sName"),"Jméno…",P.map(p=>p.name).sort((a,b)=>a.localeCompare(b)));
+  queue=[];ok=0;tot=0;nextQ();
+}
+function nextQ(){
+  if(!queue.length)queue=shuffle(P).filter(p=>p!==cur);
+  cur=queue.pop();checked=false;
+  $("qphoto").replaceChildren(photo(cur.id));
+  S.forEach(([s])=>{$(s).value="";$(s).className=""});
+  $("fix").textContent="";stat();
+}
+function check(){
+  if(checked)return;checked=true;let wrong=0;
+  S.forEach(([s,k])=>{const good=$(s).value===cur[k];$(s).className=good?"ok":"bad";tot++;good?ok++:wrong++});
+  $("fix").style.color=wrong?"var(--bad)":"var(--ok)";
+  $("fix").textContent=wrong?`${cur.num} · ${cur.nick} · ${cur.name}`:"Vše správně!";
+  stat();
+}
+function stat(){$("stat").textContent=`Správně ${ok} / ${tot}`}
+$("check").onclick=check;$("next").onclick=nextQ;
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&cm==1)checked?nextQ():check()});
+
+// ---- Režim 2 ----
+let drag=null,sel=null,mistakes=0,left=0;
+function chip(p,t){
+  const c=document.createElement("div");c.className="chip";c.dataset.t=t;c.dataset.p=p.id;c.draggable=true;
+  if(t=="photo")c.append(photo(p.id));else c.textContent=p[t];
+  c.ondragstart=e=>{drag=c;e.dataTransfer.setData("text","x")};
+  c.onclick=()=>{if(c.parentNode.id!=="pool")return;sel&&sel.classList.remove("sel");sel=sel===c?null:c;sel&&sel.classList.add("sel")};
+  return c;
+}
+function st2(){$("stat").textContent=left?`Chyby ${mistakes} · zbývá ${left}`:`Hotovo! Chyb: ${mistakes}`}
+function place(c,z){
+  if(!c||c.parentNode.id!=="pool")return;
+  if(c.dataset.t===z.dataset.t&&c.dataset.p===z.dataset.p){
+    z.textContent="";z.append(c);z.classList.add("ok");c.draggable=false;c.classList.remove("sel");sel=null;left--;
+  }else{mistakes++;z.classList.add("bad");setTimeout(()=>z.classList.remove("bad"),350)}
+  st2();
+}
+function startDnd(){
+  mistakes=0;sel=null;
+  const g=$("grid");g.textContent="";
+  const lb={photo:"foto",num:"číslo",nick:"přezdívka",name:"jméno"};
+  ROWS.forEach(r=>r.num.forEach(n=>{
+    const p=P.find(x=>x.num==n),cell=document.createElement("div");cell.className="cell";
+    ["photo","num","nick","name"].forEach(t=>{
+      const z=document.createElement("div");z.className="zone";z.dataset.t=t;z.dataset.p=p.id;z.textContent=lb[t];
+      z.ondragover=e=>{e.preventDefault();z.classList.add("over")};
+      z.ondragleave=()=>z.classList.remove("over");
+      z.ondrop=e=>{e.preventDefault();z.classList.remove("over");place(drag,z)};
+      z.onclick=()=>place(sel,z);
+      cell.append(z);
+    });
+    g.append(cell);
+  }));
+  const pool=$("pool");pool.textContent="";
+  const chips=[];P.forEach(p=>["photo","num","nick","name"].forEach(t=>chips.push(chip(p,t))));
+  shuffle(chips).forEach(c=>pool.append(c));
+  left=chips.length;st2();
+}
+$("again").onclick=startDnd;
+mode(1);
+</script>
+</body>
+</html>
