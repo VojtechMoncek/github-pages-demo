@@ -7,8 +7,8 @@
 <style>
 :root{--bg:#1c1f22;--panel:#272b2f;--line:#3b4147;--tx:#e8e4da;--mut:#9a9a92;--ok:#6fbf73;--bad:#e0644f;--acc:#e3b341;--fs:clamp(8px,min(2.4vw,1.9vh),14px);--cfs:clamp(11px,min(3.2vw,2.5vh),17px)}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;overflow:hidden}
-body{height:100vh;height:100dvh;background:var(--bg);color:var(--tx);font:15px/1.25 "Trebuchet MS",Verdana,sans-serif;padding:6px;display:flex;flex-direction:column;gap:6px;-webkit-user-select:none;user-select:none;transform:rotate(.5deg)}
+html,body{height:100%;margin:0;overflow:hidden;transform: rotate(.5deg);transform-origin: center}
+body{height:100vh;height:100dvh;background:var(--bg);color:var(--tx);font:15px/1.25 "Trebuchet MS",Verdana,sans-serif;padding:6px;display:flex;flex-direction:column;gap:6px;-webkit-user-select:none;user-select:none}
 button,select{font:inherit;color:var(--tx);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
 button{cursor:pointer}
 button:hover{border-color:var(--acc)}
@@ -317,7 +317,7 @@ function startDnd(){
 function startSolution(){
   const g=$("solutionGrid");
   g.textContent="";
-  ORDER.forEach(r=>{
+  ROWS.forEach(r=>{
     r.num.forEach(n=>{
       const p=P.find(x=>x.num==n);
       const cell=document.createElement("div");
@@ -343,14 +343,14 @@ function startSolution(){
 
 /* ===== Režim 4 – Final ===== */
 
-let CELLS=[],fOrder=[],fLast=null,fSel=null,fMoves=0,fDone=false;
+let CELLS=[],fOrder=[],fSel=null,fMoves=0,fDone=false;
 
 const solved=()=>fOrder.every((p,i)=>p===CELLS[i]);
 
 function startFinal(){
   CELLS=ORDER.flatMap(r=>r.num.map(n=>P.find(x=>x.num==n)));
   do{fOrder=shuffle(CELLS);}while(solved());
-  fSel=null;fLast=null;fMoves=0;fDone=false;
+  fSel=null;fMoves=0;fDone=false;
 
   const L=$("flabels");
   L.textContent="";
@@ -369,7 +369,7 @@ function renderFinal(){
   g.textContent="";
   CELLS.forEach((c,i)=>{
     const d=document.createElement("div");
-    d.className="fcell"+(fDone?" done":"");
+    d.className="fcell"+(fSel===i?" sel":"")+(fDone?" done":"");
     const pic=document.createElement("div");
     pic.className="pic";
     pic.append(photo(fOrder[i].id));
@@ -380,12 +380,11 @@ function renderFinal(){
     d.onclick=()=>fPick(i);
     g.append(d);
   });
-  $("stat").textContent=fDone?`Hotovo! Tahů: ${fMoves}`:`Tahy ${fMoves} · stisknuto: ${fLast===null?"–":fLast}`;
+  $("stat").textContent=fDone?`Hotovo! Tahů: ${fMoves}`:`Tahy ${fMoves}`+(fSel!==null?` · vybráno ${fSel}`:"");
 }
 
 function fPick(i){
   if(fDone)return;
-  fLast=i;
   if(fSel===null){
     fSel=i;
   }else if(fSel===i){
