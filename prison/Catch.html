@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Catch</title>
+<style>
+:root{--bg:#f3f5f1;--card:#fff;--text:#1d2a1d;--muted:#667;--grid:#e4eadf;--snake:#2e8b3d;--head:#1b5e27;--food:#d93b3b;--accent:#2e8b3d;--line:#cfd8c9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121712;--card:#1b231b;--text:#e6efe6;--muted:#9aa89a;--grid:#233023;--snake:#4fc460;--head:#8ff09c;--food:#ff6b6b;--accent:#4fc460;--line:#334233}}
+:root[data-theme="dark"]{--bg:#121712;--card:#1b231b;--text:#e6efe6;--muted:#9aa89a;--grid:#233023;--snake:#4fc460;--head:#8ff09c;--food:#ff6b6b;--accent:#4fc460;--line:#334233}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;min-height:100vh}
+main{width:100%;max-width:520px;padding:14px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:1.3rem;margin:0}
+.stats{display:flex;gap:14px;font-size:.95rem;color:var(--muted)}
+.stats b{color:var(--text)}
+canvas{width:100%;aspect-ratio:1;background:var(--card);border:2px solid var(--line);border-radius:12px;touch-action:none;display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hint{font-size:.85rem;color:var(--muted);line-height:1.4}
+#panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+#panel[hidden]{display:none}
+#panel h2{margin:0;font-size:1.05rem}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.keys label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.keys button.listening{outline:2px solid var(--accent)}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.9rem}
+.field input[type=range]{width:100%}
+.check{display:flex;align-items:center;gap:8px;font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🐍 Snake naruby</h1>
+    <div class="stats">
+      <span>Skóre: <b id="score">0</b></span>
+      <span>Rekord: <b id="best">0</b></span>
+      <span>Rychlost: <b id="spd">×1.0</b></span>
+    </div>
+  </header>
+  <canvas id="c" width="480" height="480"></canvas>
+  <div class="row">
+    <button class="primary" id="startBtn">Start / Pauza (mezerník)</button>
+    <button id="setBtn">⚙ Nastavení</button>
+  </div>
+  <div class="hint">Stejný směr znovu = zrychlení · opačný směr = zpomalení · stěnami se prochází · doleva/doprava jsou prohozené (jde vypnout). Na mobilu přejeď prstem po hřišti.</div>
+
+  <section id="panel" hidden>
+    <h2>Nastavení</h2>
+    <div class="keys" id="keys"></div>
+    <label class="check"><input type="checkbox" id="swap"> Prohodit doleva a doprava</label>
+    <div class="field">
+      <span>Síla zrychlení/zpomalení při stisku: <b id="accV"></b> %</span>
+      <input type="range" id="acc" min="5" max="60" step="5">
+    </div>
+    <div class="field">
+      <span>Počáteční rychlost (kroků za sekundu): <b id="baseV"></b></span>
+      <input type="range" id="base" min="3" max="14" step="1">
+    </div>
+    <div class="row">
+      <button id="resetKeys">Výchozí klávesy</button>
+      <button class="primary" id="closeBtn">Hotovo</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const N = 20, S = 480 / N;
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const DIRS = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+  const OPP = { up:'down', down:'up', left:'right', right:'left' };
+  const NAMES = { up:'Nahoru', down:'Dolů', left:'Vlevo', right:'Vpravo' };
+  const DEF = { keys:{ up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight' }, swap:true, acc:15, base:6 };
+
+  let cfg = JSON.parse(JSON.stringify(DEF));
+  try { const s = JSON.parse(localStorage.getItem('snake-cfg')); if (s && s.keys) cfg = Object.assign(cfg, s, { keys: Object.assign(cfg.keys, s.keys) }); } catch (e) {}
+  let best = 0;
+  try { best = +localStorage.getItem('snake-best') || 0; } catch (e) {}
+  const save = () => { try { localStorage.setItem('snake-cfg', JSON.stringify(cfg)); } catch (e) {} };
+
+  let snake, dir, queue, food, score, factor, state = 'ready', timer;
+
+  function reset() {
+    snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+    dir = 'right'; queue = []; score = 0; factor = 1;
+    placeFood(); updateHud(); draw();
+  }
+  function placeFood() {
+    let p;
+    do { p = { x: Math.floor(Math.random()*N), y: Math.floor(Math.random()*N) }; }
+    while (snake.some(s => s.x === p.x && s.y === p.y));
+    food = p;
+  }
+  const interval = () => 1000 / (cfg.base * factor);
+  function updateHud() {
+    $('score').textContent = score; $('best').textContent = best;
+    $('spd').textContent = '×' + factor.toFixed(1);
+  }
+
+  function input(action) {
+    if (state !== 'run') return;
+    // action = what the key says; swap turns Vlevo into a move to the right and vice versa
+    let d = action;
+    if (cfg.swap) d = action === 'left' ? 'right' : action === 'right' ? 'left' : action;
+    const last = queue.length ? queue[queue.length-1] : dir;
+    const step = 1 + cfg.acc / 100;
+    if (d === last) { factor = Math.min(6, factor * step); }
+    else if (d === OPP[last]) { factor = Math.max(0.3, factor / step); }
+    else if (queue.length < 2) { queue.push(d); }
+    updateHud();
+  }
+
+  function tick() {
+    if (state !== 'run') return;
+    if (queue.length) dir = queue.shift();
+    const [dx, dy] = DIRS[dir];
+    const h = { x: (snake[0].x + dx + N) % N, y: (snake[0].y + dy + N) % N };
+    const eating = h.x === food.x && h.y === food.y;
+    const body = eating ? snake : snake.slice(0, -1);
+    if (body.some(s => s.x === h.x && s.y === h.y)) return gameOver();
+    snake.unshift(h);
+    if (eating) {
+      score++; if (score > best) { best = score; try { localStorage.setItem('snake-best', best); } catch (e) {} }
+      placeFood();
+    } else snake.pop();
+    updateHud(); draw();
+    timer = setTimeout(tick, interval());
+  }
+
+  function gameOver() { state = 'over'; clearTimeout(timer); draw(); }
+  function start() {
+    if (state === 'over' || state === 'ready') { reset(); }
+    if (state === 'run') { state = 'pause'; clearTimeout(timer); draw(); return; }
+    state = 'run'; clearTimeout(timer); timer = setTimeout(tick, interval()); draw();
+  }
+  function pause() { if (state === 'run') { state = 'pause'; clearTimeout(timer); draw(); } }
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function draw() {
+    ctx.clearRect(0, 0, 480, 480);
+    ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+    for (let i = 1; i < N; i++) {
+      ctx.beginPath(); ctx.moveTo(i*S, 0); ctx.lineTo(i*S, 480); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i*S); ctx.lineTo(480, i*S); ctx.stroke();
+    }
+    if (!snake) return;
+    ctx.fillStyle = css('--food');
+    ctx.beginPath(); ctx.arc(food.x*S+S/2, food.y*S+S/2, S/2-3, 0, 7); ctx.fill();
+    snake.forEach((s, i) => {
+      ctx.fillStyle = css(i ? '--snake' : '--head');
+      ctx.beginPath(); ctx.roundRect(s.x*S+1, s.y*S+1, S-2, S-2, 6); ctx.fill();
+    });
+    const msg = state === 'ready' ? 'Stiskni mezerník' : state === 'pause' ? 'Pauza' : state === 'over' ? 'Konec hry – skóre ' + score : '';
+    if (msg) {
+      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, 190, 480, 100);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 28px system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(msg, 240, 240);
+      ctx.font = '16px system-ui,sans-serif';
+      ctx.fillText(state === 'over' ? 'Mezerníkem začni znovu' : 'Mezerník = start / pauza', 240, 270);
+    }
+  }
+
+  // ---- Settings ----
+  let listening = null;
+  const pretty = c => c.replace('Arrow','Šipka ').replace('Key','').replace('Digit','').replace('Space','Mezerník');
+  function renderKeys() {
+    const box = $('keys'); box.innerHTML = '';
+    Object.keys(NAMES).forEach(a => {
+      const l = document.createElement('label'); l.textContent = NAMES[a];
+      const b = document.createElement('button'); b.textContent = pretty(cfg.keys[a]);
+      b.onclick = () => { listening = a; renderKeys(); box.querySelectorAll('button')[Object.keys(NAMES).indexOf(a)].textContent = 'Stiskni klávesu…'; box.querySelectorAll('button')[Object.keys(NAMES).indexOf(a)].classList.add('listening'); };
+      l.appendChild(b); box.appendChild(l);
+    });
+  }
+  function syncUi() {
+    renderKeys();
+    $('swap').checked = cfg.swap; $('acc').value = cfg.acc; $('accV').textContent = cfg.acc;
+    $('base').value = cfg.base; $('baseV').textContent = cfg.base;
+  }
+  $('setBtn').onclick = () => { pause(); syncUi(); $('panel').hidden = false; };
+  $('closeBtn').onclick = () => { listening = null; $('panel').hidden = true; };
+  $('swap').onchange = e => { cfg.swap = e.target.checked; save(); };
+  $('acc').oninput = e => { cfg.acc = +e.target.value; $('accV').textContent = cfg.acc; save(); };
+  $('base').oninput = e => { cfg.base = +e.target.value; $('baseV').textContent = cfg.base; save(); };
+  $('resetKeys').onclick = () => { cfg.keys = Object.assign({}, DEF.keys); listening = null; save(); renderKeys(); };
+  $('startBtn').onclick = start;
+
+  document.addEventListener('keydown', e => {
+    if (listening) {
+      e.preventDefault();
+      if (e.code !== 'Escape') {
+        // if the key is already used, swap the two bindings
+        const other = Object.keys(cfg.keys).find(k => cfg.keys[k] === e.code);
+        if (other) cfg.keys[other] = cfg.keys[listening];
+        cfg.keys[listening] = e.code; save();
+      }
+      listening = null; renderKeys(); return;
+    }
+    if (!$('panel').hidden) return;
+    if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) start(); return; }
+    const a = Object.keys(cfg.keys).find(k => cfg.keys[k] === e.code);
+    if (a) { e.preventDefault(); if (!e.repeat) input(a); }
+  });
+
+  // swipe on canvas (mobile)
+  let t0 = null;
+  cv.addEventListener('touchstart', e => { t0 = e.touches[0]; if (state !== 'run') start(); }, { passive: true });
+  cv.addEventListener('touchend', e => {
+    if (!t0) return;
+    const t = e.changedTouches[0], dx = t.clientX - t0.clientX, dy = t.clientY - t0.clientY;
+    t0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+    const d = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    input(d);
+  });
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  reset();
+})();
+</script>
+</body>
+</html>
