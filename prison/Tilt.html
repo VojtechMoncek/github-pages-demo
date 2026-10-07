@@ -377,7 +377,7 @@ function renderFinal(){
     cn.className="cn";
     cn.textContent=c.num;
     d.append(pic,cn);
-    d.onclick=()=>fPick(i);
+    d.onclick=()=>fPick(CELLS.indexOf(fOrder[i]));
     g.append(d);
   });
   $("stat").textContent=fDone?`Hotovo! Tahů: ${fMoves}`:`Tahy ${fMoves} · stisknuto: ${fLast===null?"–":fLast}`;
@@ -391,7 +391,8 @@ function fPick(i){
   }else if(fSel===i){
     fSel=null;
   }else{
-    [fOrder[fSel],fOrder[i]]=[fOrder[i],fOrder[fSel]];
+    const a=fOrder.indexOf(CELLS[fSel]),b=fOrder.indexOf(CELLS[i]);
+    [fOrder[a],fOrder[b]]=[fOrder[b],fOrder[a]];
     fSel=null;
     fMoves++;
     if(solved())fDone=true;
