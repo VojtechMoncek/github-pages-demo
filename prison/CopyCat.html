@@ -409,7 +409,13 @@ const DEFAULTS={
   l2Len:20,
 
   l3Start:1,
-  l3Len:20
+  l3Len:20,
+
+  l32Start:1,
+  l32Len:20,
+  l32Chunk:3,
+  l32Offset:0,
+  l32Pause:6
 };
 
 
@@ -427,7 +433,13 @@ const DEFS=[
   ['l2Len','Level 2: cílová délka',1,50,1,''],
 
   ['l3Start','Level 3: počáteční délka',1,30,1,''],
-  ['l3Len','Level 3: cílová délka',1,50,1,'']
+  ['l3Len','Level 3: cílová délka',1,50,1,''],
+
+  ['l32Start','Level 3.2: počáteční délka',1,30,1,''],
+  ['l32Len','Level 3.2: cílová délka',1,50,1,''],
+  ['l32Chunk','Level 3.2: velikost cílové sekvence (hráč)',1,50,1,''],
+  ['l32Offset','Level 3.2: offset (program na začátku)',0,50,1,''],
+  ['l32Pause','Level 3.2: pauza (program mezi hráčem)',0,50,1,'']
 ];
 
 
@@ -447,7 +459,16 @@ const LEVELS=[
   {
     k:'l3',
     name:'Level 3',
-    desc:'Sekvence se v každém kole úplně změní.'
+    desc:'Sekvence se v každém kole úplně změní.',
+    fresh:true
+  },
+
+  {
+    k:'l32',
+    name:'Level 3.2',
+    desc:'Jako Level 3, ale body střídavě mačká program a hráč.',
+    fresh:true,
+    chunk:true
   }
 ];
 
@@ -668,6 +689,19 @@ function playDotSound(index){
    MENU
    ========================================================= */
 
+function levelInfo(l){
+
+  let t=`${S[l.k+'Start']} → ${S[l.k+'Len']} bodů`;
+
+  if(l.chunk){
+    t+=`<br>hráč ${S[l.k+'Chunk']} · offset ${S[l.k+'Offset']} · pauza ${S[l.k+'Pause']}`;
+  }
+
+  return t;
+
+}
+
+
 function buildMenu(){
 
   $('levels').innerHTML='';
@@ -686,7 +720,7 @@ function buildMenu(){
 
       <span>
         ${l.desc}<br>
-        ${S[l.k+'Start']} → ${S[l.k+'Len']} bodů
+        ${levelInfo(l)}
       </span>
     `;
 
@@ -777,7 +811,7 @@ function refreshLevelText(){
 
       b.querySelector('span').innerHTML=`
         ${LEVELS[i].desc}<br>
-        ${S[k+'Start']} → ${S[k+'Len']} bodů
+        ${levelInfo(LEVELS[i])}
       `;
 
     });
@@ -1062,11 +1096,11 @@ const randSeq=n=>{
    UŽIVATELŮV TAH
    ========================================================= */
 
-function waitInput(seq,id){
+function waitInput(seq,from,to,id){
 
   return new Promise(res=>{
 
-    let idx=0;
+    let idx=from;
 
 
     $('board')
@@ -1110,7 +1144,7 @@ function waitInput(seq,id){
           `Tvoje řada: ${idx} / ${seq.length}`;
 
 
-        if(idx===seq.length){
+        if(idx===to){
 
           clickHandler=null;
 
@@ -1143,6 +1177,109 @@ function waitInput(seq,id){
 /* =========================================================
    HLAVNÍ HERNÍ SMYČKA
    ========================================================= */
+
+/*
+ * Fáze odpovědi hráče.
+ *
+ * Běžné levely: hráč zopakuje celou sekvenci.
+ *
+ * Level 3.2: střídá se program (OFFSET, pak PAUSE, PAUSE, ...)
+ * a hráč (vždy CHUNK bodů).
+ */
+
+async function answerPhase(li,seq,n,target,id){
+
+  const L=LEVELS[li];
+
+  const head=`${L.name} · kolo ${n} / ${target}`;
+
+
+  if(!L.chunk){
+
+    $('status').textContent=`${head} · tvůj tah`;
+
+    return waitInput(seq,0,seq.length,id);
+
+  }
+
+
+  const chunk=Math.max(1,S[L.k+'Chunk']);
+
+  let pos=0;
+
+  let programCount=S[L.k+'Offset'];
+
+
+  while(pos<seq.length){
+
+    /* ----- program mačká body ----- */
+
+    if(programCount>0){
+
+      const stop=Math.min(pos+programCount,seq.length);
+
+      $('board').classList.add('wait');
+
+      $('status').textContent=`${head} · hraje program`;
+
+      /*
+       * Po tahu hráče počká program dobu svícení + prodlevu,
+       * jako by hráčův poslední bod byl dalším bodem sekvence.
+       * (Na začátku už prodleva proběhla po přehrání sekvence.)
+       */
+
+      if(pos>0){
+        await sleep(S.dur+S.gap);
+      }
+
+      for(;pos<stop;pos++){
+
+        if(id!==run)return false;
+
+        const i=seq[pos];
+
+        playDotSound(i);
+
+        dots[i].classList.add('lit');
+
+        await sleep(S.dur);
+
+        dots[i].classList.remove('lit');
+
+        await sleep(S.gap);
+
+      }
+
+      if(id!==run)return false;
+
+      if(pos>=seq.length)break;
+
+    }
+
+
+    /* ----- hráč mačká body ----- */
+
+    const stop=Math.min(pos+chunk,seq.length);
+
+    $('status').textContent=
+      `${head} · tvůj tah (${pos+1}–${stop} z ${seq.length})`;
+
+    const ok=await waitInput(seq,pos,stop,id);
+
+    if(!ok||id!==run)return false;
+
+    pos=stop;
+
+    $('board').classList.add('wait');
+
+    programCount=S[L.k+'Pause'];
+
+  }
+
+  return true;
+
+}
+
 
 async function play(li,id){
 
@@ -1184,7 +1321,7 @@ async function play(li,id){
      */
 
     if(
-      li===2 ||
+      LEVELS[li].fresh ||
       seq.length===0
     ){
 
@@ -1262,13 +1399,12 @@ async function play(li,id){
     if(id!==run)return;
 
 
-    $('status').textContent=
-      `${LEVELS[li].name} · kolo ${n} / ${target} · tvůj tah`;
-
-
     const ok=
-      await waitInput(
+      await answerPhase(
+        li,
         seq,
+        n,
+        target,
         id
       );
 
