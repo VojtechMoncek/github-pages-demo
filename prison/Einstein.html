@@ -80,6 +80,17 @@ button{font:inherit;cursor:pointer}
 .ans.bd .b{background:#8a5a2e;border-color:#8a5a2e;color:#fff}
 .ans input:focus-visible,.k:focus-visible,.lvl:focus-visible,.b:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 .done{opacity:.6}
+.hint3{margin-top:18px;font-family:Caveat,"Segoe Print",cursive;font-size:1.25rem;opacity:.7}
+.opts3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:8px}
+.opt3{display:flex;align-items:center;gap:12px;text-align:left;background:rgba(255,255,255,.06);color:#f1f0e6;border:2px solid rgba(241,240,230,.55);
+ border-radius:14px 10px 16px 9px/10px 15px 9px 14px;padding:9px 14px;font-family:Caveat,"Segoe Print","Comic Sans MS",cursive;font-size:1.55rem;line-height:1.15;transition:transform .12s,background .12s,border-color .12s}
+.opt3 b{flex:0 0 auto;width:2.1rem;height:2.1rem;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;font-size:1.35rem;font-weight:700}
+.opt3 span{min-width:0;overflow-wrap:anywhere}
+.opt3:hover:not(:disabled){background:rgba(255,255,255,.15);border-color:#fff;transform:rotate(-.7deg) scale(1.02)}
+.opt3:disabled{cursor:default}
+.opt3.ok{background:rgba(123,227,162,.22);border-color:#7be3a2;color:#c8ffd9;box-shadow:0 0 14px rgba(123,227,162,.45)}
+.opt3.ko{background:rgba(255,110,110,.2);border-color:#ff8a8a;color:#ffd0d0}
+.opt3:focus-visible{outline:3px solid #ffe08a;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -143,13 +154,16 @@ function picDice(){
      ["text otázky", odpověď, "obrazek.png"]      → text + obrázek
      ["", odpověď, "obrazek.png"]                 → jen obrázek
    Odpověď je celé číslo bez uvozovek (žádná desetinná tečka).
-   Obrázek: cesta k souboru ve stejné složce jako Einstein.html
-   (např. "img/uloha1.png"), nebo vložený data:image/... řetězec,
-   pokud má být vše v jednom souboru.
+   Obrázek: stačí název souboru, např. "uloha1.png". Soubory patří
+   do složky einstein/ vedle Einstein.html (složku lze změnit v IMG
+   níže). Funguje i celá cesta "einstein/uloha1.png" nebo vložený
+   řetězec data:image/..., pokud má být vše v jednom souboru.
    Řádky odděluj čárkou. Funkce picStars a picDice jsou náhodné
    obrázky – smaž je ze seznamu, pokud je nechceš.
    Po změně počtu otázek se pokrok Levelu 1 sám vynuluje.
    ============================================================= */
+const IMG="einstein/";
+const imgSrc=x=>/^(data:|https?:|\/)/.test(x)||x.startsWith(IMG)?x:IMG+x;
 const D1=[
  ["Kolik dní má týden?",7],["Kolik minut má hodina?",60],["Kolik nohou má pavouk?",8],["Kolik stran má šestiúhelník?",6],
  ["Kolik je 12 × 12?",144],["Kolik měsíců má rok?",12],["Kolik sekund má minuta?",60],["Kolik je 9 × 8?",72],
@@ -160,39 +174,57 @@ const D1=[
  picStars,picDice
 ];
 
-/* ---------- Tabule (Level 3) ---------- */
+/* ---------- Tabule (Level 3) ----------
+   Formát: ["otázka", odpověď] nebo ["otázka", číslo správné možnosti, ["možnost 1","možnost 2",...]].
+   U výběrových otázek se odpovídá číslem možnosti (1, 2, 3 ...). */
 const D3=[
- ["Vlak jede rychlostí 90 km/h. Kolik kilometrů ujede za 4 hodiny?",360],
- ["Kolik je 15 % ze 480?",72],
- ["Jaký je součet vnitřních úhlů pětiúhelníku ve stupních?",540],
- ["Kolik úhlopříček má osmiúhelník?",20],
- ["Kolik je 2 na desátou?",1024],
- ["Kolik je 7! (7 faktoriál)?",5040],
- ["Kolik je prvočísel menších než 30?",10],
- ["Jaký je největší společný dělitel čísel 84 a 126?",42],
- ["Jaký je nejmenší společný násobek čísel 12 a 18?",36],
- ["Kolik je 1 + 2 + 3 + … + 100?",5050],
- ["Obdélník má strany 35 cm a 15 cm. Jaký je jeho obvod v cm?",100],
- ["Trojúhelník má základnu 14 cm a výšku 9 cm. Jaký je jeho obsah v cm²?",63],
- ["Kolik je druhá odmocnina z 2025?",45],
- ["V kterém roce získal Albert Einstein Nobelovu cenu za fyziku?",1921],
- ["V kterém roce publikoval Einstein speciální teorii relativity?",1905],
- ["Kolik je 3 na čtvrtou?",81],
- ["Kolik je 25 % z 15 % ze 4000?",150],
- ["Pět dělníků vykope jámu za 12 dnů. Za kolik dnů ji vykope 15 dělníků?",4],
- ["Kolik je 17 × 23?",391],
- ["Součet tří po sobě jdoucích čísel je 87. Které je největší?",30],
- ["Kolik různých pořadí lze sestavit z 5 různých knih?",120],
- ["Krychle má hranu 6 cm. Jaký je její objem v cm³?",216],
- ["Kolik je 999 × 11?",10989],
- ["Cena bundy je 2400 Kč. Po slevě 35 % kolik Kč stojí?",1560],
- ["Kolik je 5 na třetí mínus 4 na třetí?",61],
- ["Kolik dvojciferných čísel je dělitelných sedmi?",13],
- ["Jaké je nejmenší trojciferné prvočíslo?",101],
- ["Kolik nul je na konci čísla 100! (100 faktoriál)?",24]
+ ["Kolik m/s je 90 km/h?",25],
+ ["Kolik stupňů Celsia je 50 stupňů Fahrenheita?",10],
+ ["Kolik stupňů Fahrenheita je −10 stupňů Celsia?",14],
+ ["Kolik m/s je 180 km/h?",50],
+ ["Jaké je atomové číslo vodíku?",1],
+ ["Kolik stupňů Fahrenheita je 20 stupňů Celsia?",68],
+ ["Jaký je součet vnitřních úhlů v trojúhelníku?",180],
+ ["Kolik atomů vodíku je v molekule metanu?",4],
+ ["Jaké je atomové číslo kyslíku?",8],
+ ["Kolik atomů vodíku je v molekule etanu?",6],
+ ["Jaký je sinus 90 stupňů?",1],
+ ["Kolik tekutých uncí je v americkém galonu?",128],
+ ["Jaký je kosinus 90 stupňů?",0],
+ ["Kolik yardů je míle?",1760],
+ ["Kolik desetin milimetru je v jednom imperiálním palci?",254],
+ ["Jaká je derivace F(x), je-li F(x)=199x+199?",199],
+ ["Kolik stupňů Celsia je 86 stupňů Fahrenheita?",30],
+ ["Jakých 6 prvních desetinných míst má číslo Pí?",141592],
+ ["Kolik km činí obvod Země na rovníku?",2,["30 033","40 075","50 021","62 004","100 000"]],
+ ["Kolik atomů uhlíku je v molekule propanu?",3],
+ ["Kolik km/h je 20 m/s?",72],
+ ["Která z těchto je nejmenší planeta v naší sluneční soustavě?",2,["Země","Merkur","Mars","Jupiter","Saturn","Uran"]],
+ ["Která hvězda je nejblíže našemu Slunci?",4,["Sirius","Wolf 359","Epsilon Eridani","Alfa Centauri","Procyon"]],
+ ["Jak se jmenuje konstanta, která udává počet částic v jednom molu látky?",1,["Avogadrova konstanta","Faradayova konstanta","Bohrův poloměr","Hmotnost elektronu","Planckova konstanta"]],
+ ["Který plyn je ve vzduchu nejběžnější?",5,["Kyslík","Oxid uhličitý","Vodík","Helium","Dusík"]],
+ ["Který plyn není vzácný plyn?",3,["Helium","Neon","Vodík","Argon","Xenon"]],
+ ["Která je nejvzdálenější vrstva zemské atmosféry?",1,["Exosféra","Mezosféra","Stratosféra","Troposféra","Termosféra"]],
+ ["Který z těchto prvků je nejhustší?",2,["Iridium","Osmium","Zlato","Uran","Platina"]],
+ ["Který z následujících je Ohmův zákon?",2,["P = U·I","U = R·I","W = m·g·h","F = m·g","W = P·t"]],
+ ["Jaká je druhá nejbližší vrstva zemské atmosféry od povrchu?",3,["Exosféra","Mezosféra","Stratosféra","Troposféra","Termosféra"]],
+ ["Která z těchto kyselin je kyselina dusičná?",4,["H₂SO₄","HCl","H₃PO₄","HNO₃","H₂CO₃"]],
+ ["Který izotop uranu je v přírodě nejběžnější?",4,["U-233","U-235","U-236","U-238","U-239"]],
+ ["Která z těchto planet je pátá od Slunce?",4,["Země","Merkur","Mars","Jupiter","Saturn","Uran"]],
+ ["Jaká je rychlost zvuku ve vzduchu v m/s?",3,["430","290","340","510"]],
+ ["Jaké je atomové číslo uranu?",92],
+ ["Jaké je atomové číslo uhlíku?",6]
 ];
 
-/* ---------- Kalkulačka (Level 2) – generátor příkladů ---------- */
+/* ---------- Kalkulačka (Level 2) – pevné příklady ----------
+   Formát: ["příklad", odpověď]. Všechny otazníky v jednom příkladu mají stejnou hodnotu. */
+const D2=[
+ ["7 + 1 + 4 + 7 = ?",19],["6 + 8 + 8 = ?",22],["22 ÷ 2 = ?",11],["7 × 3 = ?",21],["33 + 34 + 35 = ?",102],
+ ["5 × 7 × 8 = ?",280],["3 + 33 + 333 = ?",369],["4 × ? − ? = 6",2],["111 − 6 = 47 + ?",58],["920 ÷ ? = 23",40],
+ ["(47 − 4) × 4 = ? + (33 − 15)",154],["(17 + ?) ÷ (23 − ?) = 4",15],["(5 − 7) × ? − (2 − 9) = 1 − (−4) × ?",1],
+ ["64 ÷ ? = ? × ?",4],["27 ÷ ? = 15 − 18 ÷ ?",3]
+];
+/* ---------- Level 2.2 – generátor příkladů ---------- */
 function genEq(){
   const t=R(0,7);let a,b,c,d;
   switch(t){
@@ -210,12 +242,12 @@ function genEq(){
 /* ---------- Stav a uložení ---------- */
 const KEY="einstein-v1";
 const mk=(n)=>({w:Array(n).fill(1),score:0,total:0,best:0});
-let P=[mk(D1.length),mk(0),mk(D3.length),mk(0)];
+let P=[mk(D1.length),mk(D2.length),mk(D3.length),mk(0)];
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");
   if(s&&Array.isArray(s)&&s.length>=3)[0,1,2,3].forEach(i=>{const n=P[i].w.length;if(s[i]&&Array.isArray(s[i].w)&&s[i].w.length===n)P[i]=s[i]})}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}};
 const $=id=>document.getElementById(id);
-const calc=()=>lv===1||lv===3;
+const calc=()=>lv===1||lv===3,wt=()=>lv!==3;
 let gen=0,lv=-1,cur=-1,item=null,locked=true,streak=0,val="",tmr=null,t0=0;
 
 function menu(){
@@ -227,13 +259,13 @@ function menu(){
 }
 function start(i){
   lv=i;streak=0;$("menu").hidden=true;$("game").hidden=false;$("gt").textContent=LV[i].n;
-  $("cap").textContent=i===3?"Další příklad se objeví automaticky po správné odpovědi. Na každý máš 17 sekund.":i===1?"Příklady se generují náhodně. Na každý máš 17 sekund.":"Správně zodpovězené otázky se objevují méně často, chybné častěji.";
-  $("msl").textContent=(i===1||i===3)?"rekord série":"zvládnuto";
+  $("cap").textContent=i===3?"Další příklad se objeví automaticky po správné odpovědi. Na každý máš 17 sekund.":i===1?"Všechny otazníky v jednom příkladu mají stejnou hodnotu. Na každý máš 17 sekund.":"Správně zodpovězené otázky se objevují méně často, chybné častěji.";
+  $("msl").textContent=i===3?"rekord série":"zvládnuto";
   render();
 }
 function stats(){
   const p=P[lv];$("sc").textContent=p.score+"/"+p.total;$("st").textContent=streak;
-  if(calc()){$("ms").textContent=p.best;$("bar").style.width="0"}
+  if(!wt()){$("ms").textContent=p.best;$("bar").style.width="0"}
   else{const m=p.w.filter(w=>w<.2).length;$("ms").textContent=m+"/"+p.w.length;$("bar").style.width=(m/p.w.length*100)+"%"}
 }
 function pick(){
@@ -251,14 +283,15 @@ function lockInput(inp){
     inp.value=prev;inp.setSelectionRange(prev.length,prev.length);
     if(!locked)check(prev);
   });
+  inp._add=d=>{if(locked||prev.length>=12)return;prev+=d;inp.value=prev;check(prev)};
   ["select","mouseup","focus","touchend"].forEach(ev=>inp.addEventListener(ev,()=>setTimeout(()=>inp.setSelectionRange(inp.value.length,inp.value.length))));
 }
 
 function render(){
   gen++;locked=false;val="";$("fb").textContent="";$("fb").className="fb";$("nxw").innerHTML="";clearInterval(tmr);
   const box=$("box");
-  if(calc()){item=genEq();cur=0;
-    box.innerHTML='<div class="calc"><div class="scr"><div class="eq">'+item[0]+' =</div><div class="dsp" id="dsp">0</div><div class="tm"><i id="tb"></i></div><div class="tn" id="tn">17 s</div></div><div class="keys" id="keys"></div></div>';
+  if(calc()){if(lv===1){cur=pick();item=D2[cur]}else{item=genEq();cur=0}
+    box.innerHTML='<div class="calc"><div class="scr"><div class="eq" style="font-size:'+(item[0].length>24?'1.15rem':'1.5rem')+'">'+item[0]+(lv===1?'':' =')+'</div><div class="dsp" id="dsp">0</div><div class="tm"><i id="tb"></i></div><div class="tn" id="tn">17 s</div></div><div class="keys" id="keys"></div></div>';
     const K=$("keys");
     [["7"],["8"],["9"],["4"],["5"],["6"],["1"],["2"],["3"],["0","z"]].forEach(([t,c])=>{
       const b=document.createElement("button");b.className="k"+(c?" "+c:"");b.textContent=t;
@@ -266,13 +299,14 @@ function render(){
     t0=performance.now();tmr=setInterval(tick,100);tick();
   }else{
     let q,html,ans;
-    if(lv===0){cur=pick();let e=D1[cur];if(typeof e==="function"){const r=e();q=r[0];html='<div class="qt">'+q+'</div>'+r[1];ans=r[2]}else{q=e[0];html=(q?'<div class="qt">'+q+'</div>':'')+(e[2]?'<img class="pic" src="'+e[2]+'" alt="Obrázek k otázce">':'');ans=e[1]}}
-    else{cur=pick();q=D3[cur][0];ans=D3[cur][1];html='<div class="qt">'+q+'</div>'}
+    if(lv===0){cur=pick();let e=D1[cur];if(typeof e==="function"){const r=e();q=r[0];html='<div class="qt">'+q+'</div>'+r[1];ans=r[2]}else{q=e[0];html=(q?'<div class="qt">'+q+'</div>':'')+(e[2]?'<img class="pic" src="'+imgSrc(e[2])+'" alt="Obrázek k otázce">':'');ans=e[1]}}
+    else{cur=pick();const e=D3[cur];q=e[0];ans=e[1];html='<div class="qt">'+q+'</div>'+(e[2]?'<div class="hint3">Odpověz číslem správné možnosti.</div><div class="opts3">'+e[2].map((t,i)=>'<button type="button" class="opt3" data-n="'+(i+1)+'"><b>'+(i+1)+'</b><span>'+t+'</span></button>').join("")+'</div>':'')}
     item=[q,ans];
     const cls=lv===0?"paper":"board",ac=lv===0?"pp":"bd";
     box.innerHTML='<div class="'+cls+'">'+html+'</div><div class="ans '+ac+'"><input id="in" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="Odpověď (celé číslo)" placeholder="?"><button class="b" id="go">Nevím</button></div>';
     const inp=$("in");lockInput(inp);inp.focus({preventScroll:true});
     $("go").onclick=()=>{if(!locked)finish(inp.value,"skip")};
+    document.querySelectorAll(".opt3").forEach(o=>o.onclick=()=>inp._add(o.dataset.n));
   }
   stats();
 }
@@ -284,9 +318,13 @@ function check(v){
   const a=String(item[1]);
   if(v===a){
     locked=true;clearInterval(tmr);const g=gen;
-    (calc()?document.querySelector(".scr"):$("in")).classList.add("ok");
+    (calc()?document.querySelector(".scr"):$("in")).classList.add("ok");markOpts(v,true);
     setTimeout(()=>{if(g===gen){finish(v,"ok");if(lv===3)render()}},500);
   }else if(v.length>=a.length)finish(v,"wrong");
+}
+function markOpts(v,ok){
+  document.querySelectorAll(".opt3").forEach(o=>{o.disabled=true;
+    if(o.dataset.n===String(item[1]))o.classList.add("ok");else if(!ok&&o.dataset.n===v)o.classList.add("ko")});
 }
 function tick(){
   const left=Math.max(0,TIME-(performance.now()-t0)),b=$("tb");
@@ -297,11 +335,11 @@ function finish(v,kind){
   locked=true;clearInterval(tmr);
   const p=P[lv],ok=kind==="ok",fb=$("fb");
   p.total++;
-  if(ok){p.score++;streak++;p.best=Math.max(p.best,streak);if(!calc())p.w[cur]=Math.max(.05,p.w[cur]*.35);fb.className="fb ok";fb.textContent="Správně!"}
-  else{streak=0;if(!calc())p.w[cur]=Math.min(3,p.w[cur]*2+.5);fb.className="fb ko";
+  if(ok){p.score++;streak++;p.best=Math.max(p.best,streak);if(wt())p.w[cur]=Math.max(.05,p.w[cur]*.35);fb.className="fb ok";fb.textContent="Správně!"}
+  else{streak=0;if(wt())p.w[cur]=Math.min(3,p.w[cur]*2+.5);fb.className="fb ko";
     fb.textContent=(kind==="time"?"Čas vypršel. ":kind==="wrong"?"Špatně. ":"")+"Správně je: "+item[1]}
   if(calc())document.querySelectorAll(".k").forEach(k=>k.disabled=true);
-  else{$("in").disabled=true;$("go").disabled=true}
+  else{$("in").disabled=true;$("go").disabled=true;markOpts(v,ok)}
   save();stats();
   const n=document.createElement("button");n.className="b p nx";n.textContent="Další otázka →";n.onclick=render;$("nxw").appendChild(n);n.focus({preventScroll:true});
 }
@@ -310,7 +348,7 @@ document.addEventListener("keydown",e=>{
   if(/^\d$/.test(e.key)){key(e.key);e.preventDefault()}
 });
 $("back").onclick=menu;
-$("rsAll").onclick=()=>{if(confirm("Opravdu smazat veškerý pokrok?")){P=[mk(D1.length),mk(0),mk(D3.length),mk(0)];save();menu()}};
+$("rsAll").onclick=()=>{if(confirm("Opravdu smazat veškerý pokrok?")){P=[mk(D1.length),mk(D2.length),mk(D3.length),mk(0)];save();menu()}};
 menu();
 </script>
 </body>
