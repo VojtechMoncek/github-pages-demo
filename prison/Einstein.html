@@ -133,21 +133,6 @@ const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
 
 /* ---------- Obrázkové otázky (Level 1) ---------- */
-function picStars(){
-  const n=R(5,24),cols=6,rows=4,cells=shuffle([...Array(cols*rows).keys()]).slice(0,n);
-  let s='<svg viewBox="0 0 360 240" role="img" aria-label="Hvězdy na papíře">';
-  cells.forEach(c=>{const x=30+(c%cols)*60+R(-8,8),y=30+Math.floor(c/cols)*60+R(-8,8),r=R(13,17),p=[];
-    for(let i=0;i<10;i++){const a=Math.PI*i/5-Math.PI/2,k=i%2?r*.45:r;p.push((x+k*Math.cos(a)).toFixed(1)+","+(y+k*Math.sin(a)).toFixed(1))}
-    s+='<polygon points="'+p.join(" ")+'" fill="#f2b705" stroke="#27304a" stroke-width="1.5" stroke-linejoin="round"/>'});
-  return ["Kolik hvězd je na obrázku?",s+"</svg>",n];
-}
-function picDice(){
-  const k=R(2,4),v=Array.from({length:k},()=>R(1,6)),P={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
-  let s='<svg viewBox="0 0 '+(k*90+10)+' 100" role="img" aria-label="Hrací kostky">';
-  v.forEach((n,i)=>{const x=10+i*90;s+='<rect x="'+x+'" y="10" width="78" height="78" rx="12" fill="#fff" stroke="#27304a" stroke-width="2.5"/>';
-    P[n].forEach(p=>{s+='<circle cx="'+(x+17+(p%3)*22)+'" cy="'+(27+Math.floor(p/3)*22)+'" r="7" fill="#27304a"/>'})});
-  return ["Jaký je součet teček na všech kostkách?",s+"</svg>",v.reduce((a,b)=>a+b,0)];
-}
 /* =====================  LEVEL 1 – OTÁZKY  =====================
    Každá otázka je jeden řádek v seznamu D1 níže:
      ["text otázky", odpověď]                     → jen text
@@ -165,13 +150,8 @@ function picDice(){
 const IMG="einstein/";
 const imgSrc=x=>/^(data:|https?:|\/)/.test(x)||x.startsWith(IMG)?x:IMG+x;
 const D1=[
- ["Kolik dní má týden?",7],["Kolik minut má hodina?",60],["Kolik nohou má pavouk?",8],["Kolik stran má šestiúhelník?",6],
- ["Kolik je 12 × 12?",144],["Kolik měsíců má rok?",12],["Kolik sekund má minuta?",60],["Kolik je 9 × 8?",72],
- ["Kolik je 100 − 37?",63],["Kolik hran má krychle?",12],["Kolik je 15 + 28?",43],["Kolik vrcholů má krychle?",8],
- ["Kolik centimetrů má metr?",100],["Kolik je 7 × 6?",42],["Kolik hodin má den?",24],["Kolik je polovina ze 150?",75],
- ["Kolik je třetina z 54?",18],["Kolik stěn má kvádr?",6],["Kolik je 1000 − 1?",999],["Kolik dní má nepřestupný únor?",28],
- ["Kolik gramů má kilogram?",1000],["Kolik je 11 × 11?",121],["Kolik stran má osmiúhelník?",8],["Kolik je 6 × 7 + 8?",50],
- picStars,picDice
+ ["",10,"ein001.jpg"],["",2,"ein002.jpg"],["",7,"ein003.jpg"],["",6,"ein004.jpg"],["",18,"ein005.jpg"],["",1568,"ein006.jpg"],
+ ["",19,"ein007jpg"],["",971,"ein008jpg"],["",8,"ein009jpg"],["",36,"ein010.jpg"],["",349,"ein011.jpg"],["",923,"ein012.jpg"]
 ];
 
 /* ---------- Tabule (Level 3) ----------
@@ -189,7 +169,7 @@ const D3=[
  ["Jaké je atomové číslo kyslíku?",8],
  ["Kolik atomů vodíku je v molekule etanu?",6],
  ["Jaký je sinus 90 stupňů?",1],
- ["Kolik tekutých uncí je v americkém galonu?",128],
+ ["Kolik uncí je v galonu?",128],
  ["Jaký je kosinus 90 stupňů?",0],
  ["Kolik yardů je míle?",1760],
  ["Kolik desetin milimetru je v jednom imperiálním palci?",254],
@@ -205,7 +185,7 @@ const D3=[
  ["Který plyn je ve vzduchu nejběžnější?",5,["Kyslík","Oxid uhličitý","Vodík","Helium","Dusík"]],
  ["Který plyn není vzácný plyn?",3,["Helium","Neon","Vodík","Argon","Xenon"]],
  ["Která je nejvzdálenější vrstva zemské atmosféry?",1,["Exosféra","Mezosféra","Stratosféra","Troposféra","Termosféra"]],
- ["Který z těchto prvků je nejhustší?",2,["Iridium","Osmium","Zlato","Uran","Platina"]],
+ ["Který z těchto prvků je nejhustší? Pozor, v originále nejtěžší, a to si pořád myslím že má být Uran, i když nás to vyhodilo.",2,["Iridium","Osmium","Zlato","Uran","Platina"]],
  ["Který z následujících je Ohmův zákon?",2,["P = U·I","U = R·I","W = m·g·h","F = m·g","W = P·t"]],
  ["Jaká je druhá nejbližší vrstva zemské atmosféry od povrchu?",3,["Exosféra","Mezosféra","Stratosféra","Troposféra","Termosféra"]],
  ["Která z těchto kyselin je kyselina dusičná?",4,["H₂SO₄","HCl","H₃PO₄","HNO₃","H₂CO₃"]],
