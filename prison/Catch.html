@@ -17,7 +17,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:8px;fle
 h1{font-size:1.3rem;margin:0}
 .stats{display:flex;gap:14px;font-size:.95rem;color:var(--muted)}
 .stats b{color:var(--text)}
-canvas{width:100%;aspect-ratio:1;background:var(--card);border:2px solid var(--line);border-radius:12px;touch-action:none;display:block}
+canvas{width:100%;margin:0 auto;background:var(--card);border:2px solid var(--line);border-radius:12px;touch-action:none;display:block}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 button{font:inherit;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
 button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -31,6 +31,9 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .field{display:flex;flex-direction:column;gap:4px;font-size:.9rem}
 .field input[type=range]{width:100%}
 .check{display:flex;align-items:center;gap:8px;font-size:.9rem}
+.size{display:flex;gap:10px}
+.size label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.size input{font:inherit;width:100%;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 </style>
 </head>
 <body>
@@ -55,6 +58,13 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
     <div class="keys" id="keys"></div>
     <label class="check"><input type="checkbox" id="swap"> Prohodit doleva a doprava</label>
     <div class="field">
+      <span>Velikost hřiště, 10–50 (změna spustí novou hru)</span>
+      <div class="size">
+        <label>Šířka (X)<input type="number" id="fw" min="10" max="50" step="1" inputmode="numeric"></label>
+        <label>Výška (Y)<input type="number" id="fh" min="10" max="50" step="1" inputmode="numeric"></label>
+      </div>
+    </div>
+    <div class="field">
       <span>Síla zrychlení/zpomalení při stisku: <b id="accV"></b> %</span>
       <input type="range" id="acc" min="5" max="60" step="5">
     </div>
@@ -64,6 +74,7 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
     </div>
     <div class="row">
       <button id="resetKeys">Výchozí klávesy</button>
+      <button id="resetAll">Obnovit vše</button>
       <button class="primary" id="closeBtn">Hotovo</button>
     </div>
   </section>
@@ -71,30 +82,44 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 <script>
 (() => {
-  const N = 20, S = 480 / N;
+  let W = 30, H = 15, S = 16;
+  const clampSize = v => Math.min(50, Math.max(10, Math.round(+v) || 10));
   const cv = document.getElementById('c'), ctx = cv.getContext('2d');
   const $ = id => document.getElementById(id);
   const DIRS = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
   const OPP = { up:'down', down:'up', left:'right', right:'left' };
   const NAMES = { up:'Nahoru', down:'Dolů', left:'Vlevo', right:'Vpravo' };
-  const DEF = { keys:{ up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight' }, swap:true, acc:15, base:6 };
+  const DEF = { keys:{ up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight' }, swap:true, acc:15, base:6, w:30, h:15 };
 
   let cfg = JSON.parse(JSON.stringify(DEF));
   try { const s = JSON.parse(localStorage.getItem('snake-cfg')); if (s && s.keys) cfg = Object.assign(cfg, s, { keys: Object.assign(cfg.keys, s.keys) }); } catch (e) {}
+  cfg.w = clampSize(cfg.w || DEF.w); cfg.h = clampSize(cfg.h || DEF.h);
   let best = 0;
-  try { best = +localStorage.getItem('snake-best') || 0; } catch (e) {}
+  const bestKey = () => cfg.w === 20 && cfg.h === 20 ? 'snake-best' : 'snake-best-' + cfg.w + 'x' + cfg.h;
+  function applyField() {
+    W = cfg.w; H = cfg.h;
+    const m = Math.max(W, H);
+    S = 480 / m;
+    cv.width = Math.round(S * W); cv.height = Math.round(S * H);
+    cv.style.aspectRatio = W + ' / ' + H;
+    cv.style.width = (W / m * 100) + '%';
+    best = 0;
+    try { best = +localStorage.getItem(bestKey()) || 0; } catch (e) {}
+  }
+  applyField();
   const save = () => { try { localStorage.setItem('snake-cfg', JSON.stringify(cfg)); } catch (e) {} };
 
   let snake, dir, queue, food, score, factor, state = 'ready', timer;
 
   function reset() {
-    snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+    const cx = Math.floor(W/2), cy = Math.floor(H/2);
+    snake = [{x:cx,y:cy},{x:cx-1,y:cy},{x:cx-2,y:cy}];
     dir = 'right'; queue = []; score = 0; factor = 1;
     placeFood(); updateHud(); draw();
   }
   function placeFood() {
     let p;
-    do { p = { x: Math.floor(Math.random()*N), y: Math.floor(Math.random()*N) }; }
+    do { p = { x: Math.floor(Math.random()*W), y: Math.floor(Math.random()*H) }; }
     while (snake.some(s => s.x === p.x && s.y === p.y));
     food = p;
   }
@@ -121,13 +146,13 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
     if (state !== 'run') return;
     if (queue.length) dir = queue.shift();
     const [dx, dy] = DIRS[dir];
-    const h = { x: (snake[0].x + dx + N) % N, y: (snake[0].y + dy + N) % N };
+    const h = { x: (snake[0].x + dx + W) % W, y: (snake[0].y + dy + H) % H };
     const eating = h.x === food.x && h.y === food.y;
     const body = eating ? snake : snake.slice(0, -1);
     if (body.some(s => s.x === h.x && s.y === h.y)) return gameOver();
     snake.unshift(h);
     if (eating) {
-      score++; if (score > best) { best = score; try { localStorage.setItem('snake-best', best); } catch (e) {} }
+      score++; if (score > best) { best = score; try { localStorage.setItem(bestKey(), best); } catch (e) {} }
       placeFood();
     } else snake.pop();
     updateHud(); draw();
@@ -144,11 +169,14 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   function draw() {
-    ctx.clearRect(0, 0, 480, 480);
+    const CH = cv.height, CW = cv.width;
+    ctx.clearRect(0, 0, CW, CH);
     ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
-    for (let i = 1; i < N; i++) {
-      ctx.beginPath(); ctx.moveTo(i*S, 0); ctx.lineTo(i*S, 480); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, i*S); ctx.lineTo(480, i*S); ctx.stroke();
+    for (let i = 1; i < W; i++) {
+      ctx.beginPath(); ctx.moveTo(i*S, 0); ctx.lineTo(i*S, CH); ctx.stroke();
+    }
+    for (let i = 1; i < H; i++) {
+      ctx.beginPath(); ctx.moveTo(0, i*S); ctx.lineTo(CW, i*S); ctx.stroke();
     }
     if (!snake) return;
     ctx.fillStyle = css('--food');
@@ -159,11 +187,12 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
     });
     const msg = state === 'ready' ? 'Stiskni mezerník' : state === 'pause' ? 'Pauza' : state === 'over' ? 'Konec hry – skóre ' + score : '';
     if (msg) {
-      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, 190, 480, 100);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 28px system-ui,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(msg, 240, 240);
-      ctx.font = '16px system-ui,sans-serif';
-      ctx.fillText(state === 'over' ? 'Mezerníkem začni znovu' : 'Mezerník = start / pauza', 240, 270);
+      const my = CH / 2, mx = CW / 2, fs = Math.max(12, Math.min(28, CW / 17));
+      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, my - fs * 1.8, CW, fs * 3.6);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold ' + fs + 'px system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(msg, mx, my);
+      ctx.font = (fs * 0.57) + 'px system-ui,sans-serif';
+      ctx.fillText(state === 'over' ? 'Mezerníkem začni znovu' : 'Mezerník = start / pauza', mx, my + fs);
     }
   }
 
@@ -181,15 +210,26 @@ button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
   }
   function syncUi() {
     renderKeys();
-    $('swap').checked = cfg.swap; $('acc').value = cfg.acc; $('accV').textContent = cfg.acc;
+    $('swap').checked = cfg.swap; $('fw').value = cfg.w; $('fh').value = cfg.h; $('acc').value = cfg.acc; $('accV').textContent = cfg.acc;
     $('base').value = cfg.base; $('baseV').textContent = cfg.base;
   }
   $('setBtn').onclick = () => { pause(); syncUi(); $('panel').hidden = false; };
   $('closeBtn').onclick = () => { listening = null; $('panel').hidden = true; };
   $('swap').onchange = e => { cfg.swap = e.target.checked; save(); };
+  const onSize = () => {
+    cfg.w = clampSize($('fw').value); cfg.h = clampSize($('fh').value);
+    $('fw').value = cfg.w; $('fh').value = cfg.h; save();
+    clearTimeout(timer); state = 'ready'; applyField(); reset();
+  };
+  $('fw').onchange = onSize; $('fh').onchange = onSize;
   $('acc').oninput = e => { cfg.acc = +e.target.value; $('accV').textContent = cfg.acc; save(); };
   $('base').oninput = e => { cfg.base = +e.target.value; $('baseV').textContent = cfg.base; save(); };
   $('resetKeys').onclick = () => { cfg.keys = Object.assign({}, DEF.keys); listening = null; save(); renderKeys(); };
+  $('resetAll').onclick = () => {
+    const sizeChanged = cfg.w !== DEF.w || cfg.h !== DEF.h;
+    cfg = JSON.parse(JSON.stringify(DEF)); listening = null; save(); syncUi();
+    if (sizeChanged) { clearTimeout(timer); state = 'ready'; applyField(); reset(); }
+  };
   $('startBtn').onclick = start;
 
   document.addEventListener('keydown', e => {
