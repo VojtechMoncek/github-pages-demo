@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Burglar</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#77756e;--bd:#dedbd2;--ok:#1d9a5b;--okbg:#e2f5ea;--ko:#d23f3f;--kobg:#fbe5e5;--ac:#2b5fd9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--card:#222226;--tx:#f0efe9;--mut:#9b9a93;--bd:#38383d;--okbg:#17382a;--kobg:#401e1e;--ac:#6f95f5}}
+:root[data-theme="dark"]{--bg:#17171a;--card:#222226;--tx:#f0efe9;--mut:#9b9a93;--bd:#38383d;--okbg:#17382a;--kobg:#401e1e;--ac:#6f95f5}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:560px;padding:20px 16px 40px}
+h1{font-size:1.6rem;margin:0 0 14px;font-weight:700}
+h2{font-size:1.1rem;margin:0 0 10px}
+button{font:inherit;cursor:pointer}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.levels{display:grid;gap:10px}
+.lvl{text-align:left;padding:14px;border-radius:12px;border:2px solid var(--ac);background:transparent;color:var(--tx)}
+.lvl:hover,.lvl:focus-visible{background:var(--ac);color:#fff;outline:none}
+.lvl b{display:block;font-size:1.05rem}.lvl span{font-size:.88rem;opacity:.85}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.top h1{margin:0;font-size:1.1rem;color:var(--mut);font-weight:600}
+.b{padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+.b.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.link{background:none;border:0;color:var(--ac);text-decoration:underline;padding:4px 0}
+.stats{display:flex;gap:10px;margin-bottom:10px}
+.stat{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px;text-align:center}
+.stat b{display:block;font-size:1.25rem}.stat span{font-size:.72rem;color:var(--mut)}
+.bar{height:8px;background:var(--bd);border-radius:5px;overflow:hidden;margin-bottom:4px}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .4s}
+.cap{font-size:.75rem;color:var(--mut);margin-bottom:16px}
+.fb{min-height:24px;margin:14px 0 0;font-weight:600;text-align:center}
+.fb.ok{color:var(--ok)}.fb.ko{color:var(--ko)}
+.nx{width:100%;margin-top:10px}
+.ans{display:flex;gap:8px;margin-top:14px}
+.ans input{flex:1;min-width:0;font:inherit;font-size:1.4rem;text-align:center;padding:10px;border-radius:10px;letter-spacing:.15em}
+.ans .b{flex:0 0 auto}
+
+/* Obrázek a vstup (neutrální) */
+.panel img.pic{display:block;max-width:100%;max-height:340px;margin:0 auto;border-radius:4px}
+.ans input{background:var(--card);color:var(--tx);border:2px solid var(--bd)}
+.ans input.ok{background:var(--okbg)!important;border-color:var(--ok)!important;color:var(--ok)!important}
+.ans input:disabled{opacity:1;-webkit-text-fill-color:currentColor}
+.ans input:focus-visible,.lvl:focus-visible,.b:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.ans.l2 input{font-size:1.6rem;letter-spacing:.3em}
+
+/* Level 2: ořezané černobílé obrázky */
+.crops{display:flex;gap:12px;align-items:flex-start;justify-content:center;min-height:200px}
+.crop{flex:1;max-width:170px;aspect-ratio:3/4;background-color:#444;background-repeat:no-repeat;position:relative;overflow:hidden;
+ filter:grayscale(1) contrast(1.15);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.crop::after{content:"";position:absolute;inset:0;opacity:.45;mix-blend-mode:overlay;
+ background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 1.6 -.3'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>")}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="menu">
+  <h1>🕵️ Burglar</h1>
+  <div class="panel">
+    <h2>Vyber level</h2>
+    <div class="levels" id="levels"></div>
+  </div>
+  <button class="link" id="rsAll">Resetovat veškerý pokrok</button>
+</section>
+
+<section id="game" hidden>
+  <div class="top"><button class="b" id="back">← Menu</button><h1 id="gt"></h1></div>
+  <div class="stats">
+    <div class="stat"><b id="sc">0/0</b><span>správně</span></div>
+    <div class="stat"><b id="st">0</b><span>série</span></div>
+    <div class="stat"><b id="ms">0</b><span id="msl">zvládnuto</span></div>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="cap" id="cap"></div>
+  <div id="box"></div>
+  <div class="fb" id="fb"></div>
+  <div id="nxw"></div>
+</section>
+
+</main>
+<script>
+/* =====================================================================
+   OBSAH – sem doplň obrázky a kódy
+   Řádek: ["soubor.jpg", "42"]  → obrázek + dvouciferný kód (jako text, např. "07")
+   Obrázky patří do složky burglar/ vedle tohoto souboru (změníš v IMG).
+   Pokud soubor neexistuje, zobrazí se zástupný obrázek s názvem souboru.
+   Po změně počtu řádků se pokrok daného levelu sám vynuluje.
+   ===================================================================== */
+const IMG="burglar/";
+
+/* Level 1 */
+const D1=[
+ ["pic001.jpg","86"],["pic002.jpg","89"],["pic003.jpg","88"],["pic004.jpg","99"],
+ ["pic005.jpg","59"],["pic006.jpg","98"],["pic007.jpg","95"],["pic008.jpg","58"]
+];
+/* Level 2 – losují se tři obrázky, ořežou se; správný kód = tři kódy za sebou zleva doprava */
+const D2=[
+ ["pic001.jpg","86"],["pic002.jpg","89"],["pic003.jpg","88"],["pic004.jpg","99"],
+ ["pic005.jpg","59"],["pic006.jpg","98"],["pic007.jpg","95"],["pic008.jpg","58"]
+];
+/* Level 3 */
+const D3=[
+ ["quest001.jpg","89"],["quest002.jpg","98"],["quest003.jpg","58"],["quest004.jpg","89"],
+ ["quest005.jpg","59"],["quest006.jpg","59"],["quest007.jpg","89"],["quest008.jpg","98"],
+ ["quest009.jpg","98"],["quest010.jpg","58"],["quest011.jpg","59"],["quest012.jpg","99"],
+ ["quest013.jpg","86"]
+];
+/* ===================================================================== */
+
+const LV=[
+ {n:"Level 1 – Kód k obrázku",d:"Obrázek a dvouciferný kód.",D:D1},
+ {n:"Level 2 – Útěk",d:"Tři ořezané obrázky, šestimístný kód.",D:D2},
+ {n:"Level 3 – Kód k obrázku",d:"Obrázek a dvouciferný kód.",D:D3}
+];
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const $=id=>document.getElementById(id);
+const src=f=>/^(data:|https?:|\/)/.test(f)||f.startsWith(IMG)?f:IMG+f;
+
+function ph(label){
+  let h=0;for(const c of label)h=(h*31+c.charCodeAt(0))>>>0;
+  const rnd=()=>(h=(h*1664525+1013904223)>>>0)/4294967296;
+  let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl('+Math.floor(rnd()*360)+',45%,35%)"/><stop offset="1" stop-color="hsl('+Math.floor(rnd()*360)+',50%,70%)"/></linearGradient></defs><rect width="800" height="600" fill="url(#g)"/>';
+  for(let i=0;i<16;i++){const c='hsl('+Math.floor(rnd()*360)+',55%,'+Math.floor(25+rnd()*55)+'%)',x=rnd()*800,y=rnd()*600,r=30+rnd()*110;
+    s+=rnd()<.5?'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'" opacity=".8"/>':'<rect x="'+x+'" y="'+y+'" width="'+r*1.6+'" height="'+r+'" fill="'+c+'" opacity=".8" transform="rotate('+Math.floor(rnd()*90)+' '+x+' '+y+')"/>'}
+  s+='<text x="400" y="330" font-size="70" font-family="Arial,sans-serif" font-weight="700" fill="#fff" stroke="#000" stroke-width="3" text-anchor="middle">'+label+'</text></svg>';
+  return "data:image/svg+xml;utf8,"+encodeURIComponent(s);
+}
+const loadImg=f=>new Promise(res=>{const i=new Image();i.onload=()=>res(src(f));i.onerror=()=>res(ph(f));i.src=src(f)});
+
+/* ---------- Stav a uložení ---------- */
+const KEY="burglar-v1";
+const mk=n=>({w:Array(n).fill(1),score:0,total:0,best:0});
+let P=[mk(D1.length),mk(D2.length),mk(D3.length)];
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(Array.isArray(s))[0,1,2].forEach(i=>{if(s[i]&&Array.isArray(s[i].w)&&s[i].w.length===LV[i].D.length)P[i]=s[i]})}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}};
+let gen=0,lv=-1,cur=-1,item=null,locked=true,streak=0,need=2,ready=false;
+
+function menu(){
+  gen++;lv=-1;$("game").hidden=true;$("menu").hidden=false;
+  const L=$("levels");L.innerHTML="";
+  LV.forEach((l,i)=>{const b=document.createElement("button");b.className="lvl";const p=P[i];
+    b.innerHTML="<b>"+l.n+"</b><span>"+l.d+"<br>Správně: "+p.score+"/"+p.total+" · rekord série: "+p.best+"</span>";
+    b.onclick=()=>start(i);L.appendChild(b)});
+}
+function start(i){
+  lv=i;streak=0;need=i===1?6:2;$("menu").hidden=true;$("game").hidden=false;$("gt").textContent=LV[i].n;
+  $("cap").textContent=i===1?"Zadej kód ke všem třem obrázkům zleva doprava (3 × 2 číslice).":"Správně zodpovězené obrázky se objevují méně často, chybné častěji.";
+  $("msl").textContent=i===1?"rekord série":"zvládnuto";
+  render();
+}
+function stats(){
+  const p=P[lv];$("sc").textContent=p.score+"/"+p.total;$("st").textContent=streak;
+  if(lv===1){$("ms").textContent=p.best;$("bar").style.width="0"}
+  else{const m=p.w.filter(w=>w<.2).length;$("ms").textContent=m+"/"+p.w.length;$("bar").style.width=(m/p.w.length*100)+"%"}
+}
+function pick(){
+  const W=P[lv].w,idx=W.map((_,i)=>i).filter(i=>i!==cur);
+  let r=Math.random()*idx.reduce((a,i)=>a+W[i],0);
+  for(const i of idx){r-=W[i];if(r<=0)return i}return idx[idx.length-1];
+}
+/* jen přidávání číslic na konec – žádné mazání ani úpravy */
+function lockInput(inp){
+  let prev="";
+  inp.addEventListener("keydown",e=>{if(["Backspace","Delete","ArrowLeft","Home"].includes(e.key)||((e.ctrlKey||e.metaKey)&&"xzv".includes(e.key.toLowerCase())))e.preventDefault()});
+  inp.addEventListener("input",()=>{
+    const n=inp.value;
+    if(!locked&&n.length===prev.length+1&&n.startsWith(prev)&&/^\d$/.test(n.slice(-1))&&n.length<=need)prev=n;
+    inp.value=prev;inp.setSelectionRange(prev.length,prev.length);
+    if(!locked)check(prev);
+  });
+  ["select","mouseup","focus","touchend"].forEach(ev=>inp.addEventListener(ev,()=>setTimeout(()=>inp.setSelectionRange(inp.value.length,inp.value.length))));
+}
+
+async function render(){
+  const g=++gen;locked=true;$("fb").textContent="";$("fb").className="fb";$("nxw").innerHTML="";
+  const box=$("box");let html,pad="";
+  if(lv===1){
+    const list=shuffle(D2).slice(0,3);item=[null,list.map(e=>e[1]).join("")];
+    box.innerHTML='<div class="panel"><div class="crops"></div></div>';
+    const urls=await Promise.all(list.map(e=>loadImg(e[0])));if(g!==gen)return;
+    const c=box.querySelector(".crops");
+    urls.forEach(u=>{const d=document.createElement("div");d.className="crop";
+      d.style.cssText="background-image:url('"+u+"');background-size:"+R(200,250)+"% auto;background-position:"+R(0,100)+"% "+R(0,100)+"%;margin-top:"+R(0,30)+"px";c.appendChild(d)});
+    box.insertAdjacentHTML("beforeend",'<div class="ans l2"><input id="in" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="Šestimístný kód" placeholder="??????"></div>');
+  }else{
+    cur=pick();item=LV[lv].D[cur];
+    box.innerHTML='<div class="panel"><img class="pic" alt="Obrázek" style="opacity:.3"></div><div class="ans"><input id="in" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="Dvouciferný kód" placeholder="??"><button class="b" id="go">Nevím</button></div>';
+    const url=await loadImg(item[0]);if(g!==gen)return;
+    const im=box.querySelector("img.pic");im.src=url;im.style.opacity=1;
+    $("go").onclick=()=>{if(!locked)finish("skip")};
+  }
+  const inp=$("in");lockInput(inp);locked=false;inp.focus({preventScroll:true});
+  stats();
+}
+function check(v){
+  const a=lv===1?item[1]:item[1];
+  if(lv===1){if(v.length>=need)finish(v===a?"ok":"wrong");return}
+  if(v===a){$("in").classList.add("ok");locked=true;const g=gen;finish("ok");setTimeout(()=>{if(g===gen)render()},1000)}
+  else if(v.length>=need)finish("wrong");
+}
+function finish(kind){
+  locked=true;const p=P[lv],ok=kind==="ok",fb=$("fb");
+  p.total++;
+  if(ok){p.score++;streak++;p.best=Math.max(p.best,streak);if(lv!==1)p.w[cur]=Math.max(.05,p.w[cur]*.35);fb.className="fb ok";fb.textContent="Správně!"}
+  else{streak=0;if(lv!==1)p.w[cur]=Math.min(3,p.w[cur]*2+.5);fb.className="fb ko";
+    fb.textContent=(kind==="skip"?"":"Špatně. ")+"Správně je: "+(lv===1?item[1].match(/../g).join(" "):item[1])}
+  $("in").disabled=true;if($("go"))$("go").disabled=true;
+  save();stats();
+  if(lv===1||!ok){const n=document.createElement("button");n.className="b p nx";n.textContent=lv===1?"Zkusit znovu →":"Další →";n.onclick=render;$("nxw").appendChild(n);n.focus({preventScroll:true})}
+}
+$("back").onclick=menu;
+$("rsAll").onclick=()=>{if(confirm("Opravdu smazat veškerý pokrok?")){P=[mk(D1.length),mk(D2.length),mk(D3.length)];save();menu()}};
+menu();
+</script>
+</body>
+</html>
