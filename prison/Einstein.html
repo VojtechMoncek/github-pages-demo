@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Einstein</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#77756e;--bd:#dedbd2;--ok:#1d9a5b;--okbg:#e2f5ea;--ko:#d23f3f;--kobg:#fbe5e5;--ac:#2b5fd9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--card:#222226;--tx:#f0efe9;--mut:#9b9a93;--bd:#38383d;--okbg:#17382a;--kobg:#401e1e;--ac:#6f95f5}}
+:root[data-theme="dark"]{--bg:#17171a;--card:#222226;--tx:#f0efe9;--mut:#9b9a93;--bd:#38383d;--okbg:#17382a;--kobg:#401e1e;--ac:#6f95f5}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:560px;padding:20px 16px 40px}
+h1{font-size:1.6rem;margin:0 0 14px;font-weight:700}
+h2{font-size:1.1rem;margin:0 0 10px}
+button{font:inherit;cursor:pointer}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.levels{display:grid;gap:10px}
+.lvl{text-align:left;padding:14px;border-radius:12px;border:2px solid var(--ac);background:transparent;color:var(--tx)}
+.lvl:hover,.lvl:focus-visible{background:var(--ac);color:#fff;outline:none}
+.lvl b{display:block;font-size:1.05rem}.lvl span{font-size:.88rem;opacity:.85}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.top h1{margin:0;font-size:1.1rem;color:var(--mut);font-weight:600}
+.b{padding:9px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+.b.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.link{background:none;border:0;color:var(--ac);text-decoration:underline;padding:4px 0}
+.stats{display:flex;gap:10px;margin-bottom:10px}
+.stat{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px;text-align:center}
+.stat b{display:block;font-size:1.25rem}.stat span{font-size:.72rem;color:var(--mut)}
+.bar{height:8px;background:var(--bd);border-radius:5px;overflow:hidden;margin-bottom:4px}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .4s}
+.cap{font-size:.75rem;color:var(--mut);margin-bottom:16px}
+.fb{min-height:24px;margin:14px 0 0;font-weight:600;text-align:center}
+.fb.ok{color:var(--ok)}.fb.ko{color:var(--ko)}
+.nx{width:100%;margin-top:10px}
+.ans{display:flex;gap:8px;margin-top:14px}
+.ans input{flex:1;min-width:0;font:inherit;font-size:1.4rem;text-align:center;padding:10px;border-radius:10px}
+.ans .b{flex:0 0 auto}
+
+/* Level 1: list papíru */
+.paper{position:relative;background:#fffdf6;color:#27304a;border-radius:3px;padding:26px 22px 22px 56px;min-height:220px;
+ box-shadow:0 1px 2px rgba(0,0,0,.2),0 8px 18px rgba(0,0,0,.14);transform:rotate(-.6deg);
+ background-image:repeating-linear-gradient(transparent 0 33px,#bfd3ea 33px 34px);background-position:0 18px}
+.paper::before{content:"";position:absolute;left:40px;top:0;bottom:0;width:2px;background:#e48c8c}
+.paper::after{content:"";position:absolute;left:12px;top:30px;bottom:30px;width:14px;
+ background:radial-gradient(circle,#d8d4c6 5px,transparent 6px) 0 0/14px 70px repeat-y}
+.paper .qt{font-family:Caveat,"Segoe Print","Comic Sans MS",cursive;font-size:1.9rem;line-height:34px;font-weight:500}
+.paper img.pic{display:block;max-width:100%;max-height:260px;margin:8px auto 0;border-radius:4px}
+.paper svg{display:block;width:100%;max-width:340px;margin:0 auto;height:auto}
+.ans.pp input{background:#fffdf6;color:#27304a;border:2px solid #bfd3ea;font-family:Caveat,cursive;font-size:1.8rem}
+
+/* Level 2: kalkulačka */
+.calc{background:linear-gradient(#3a3d44,#26282d);border-radius:20px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
+.scr{background:#b9c9a3;color:#1c2616;border-radius:10px;padding:10px 14px 8px;box-shadow:inset 0 3px 8px rgba(0,0,0,.4);font-family:"Share Tech Mono",ui-monospace,Consolas,monospace}
+.eq{font-size:1.5rem;min-height:2.2em;display:flex;align-items:center;justify-content:flex-end;text-align:right;word-break:break-word;opacity:.85}
+.dsp{font-size:2.4rem;text-align:right;min-height:1.3em;overflow:hidden}
+.tm{height:6px;background:rgba(0,0,0,.18);border-radius:3px;margin-top:6px;overflow:hidden}
+.tm i{display:block;height:100%;width:100%;background:#1c2616}
+.tm i.low{background:#a32121}
+.tn{font-size:.8rem;text-align:right;margin-top:2px}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:54px;gap:9px;margin-top:14px}
+.k{border:0;border-radius:10px;background:linear-gradient(#5b5f69,#464a53);color:#fff;font-size:1.4rem;font-family:"Share Tech Mono",ui-monospace,monospace;box-shadow:0 3px 0 #1d1f24}
+.k:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #1d1f24}
+.k.f{background:linear-gradient(#d0703a,#b5592a)}.k.go{background:linear-gradient(#3aa86b,#2b8a54);grid-row:span 2}
+.k.z{grid-column:span 3}
+.scr{transition:background .15s}.scr.ok{background:#8fd19e}
+.ans input.ok{background:#e2f5ea!important;border-color:#1d9a5b!important;color:#14532d!important}
+.ans input:disabled{opacity:1;-webkit-text-fill-color:currentColor}.k:disabled{opacity:.55;cursor:default}
+
+/* Level 3: tabule */
+.board{background:radial-gradient(ellipse at 30% 20%,#34534a,#223a32 70%);color:#f1f0e6;border:14px solid #8a5a2e;border-radius:6px;
+ box-shadow:inset 0 0 22px rgba(0,0,0,.55),0 8px 18px rgba(0,0,0,.35);padding:26px 22px;min-height:220px;position:relative}
+.board::after{content:"";position:absolute;left:-14px;right:-14px;bottom:-24px;height:10px;background:#6b4522;border-radius:0 0 4px 4px}
+.board .qt{font-family:Caveat,"Segoe Print","Comic Sans MS",cursive;font-size:2rem;line-height:1.3;font-weight:500;text-shadow:0 0 1px rgba(255,255,255,.5)}
+.ans.bd{margin-top:34px}
+.ans.bd input{background:#223a32;color:#f1f0e6;border:2px dashed #9fb5aa;font-family:Caveat,cursive;font-size:1.9rem}
+.ans.bd .b{background:#8a5a2e;border-color:#8a5a2e;color:#fff}
+.ans input:focus-visible,.k:focus-visible,.lvl:focus-visible,.b:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.done{opacity:.6}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="menu">
+  <h1>🧠 Einstein</h1>
+  <div class="panel">
+    <h2>Vyber level</h2>
+    <div class="levels" id="levels"></div>
+  </div>
+  <button class="link" id="rsAll">Resetovat veškerý pokrok</button>
+</section>
+
+<section id="game" hidden>
+  <div class="top"><button class="b" id="back">← Menu</button><h1 id="gt"></h1></div>
+  <div class="stats">
+    <div class="stat"><b id="sc">0/0</b><span>správně</span></div>
+    <div class="stat"><b id="st">0</b><span>série</span></div>
+    <div class="stat"><b id="ms">0</b><span id="msl">zvládnuto</span></div>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="cap" id="cap"></div>
+  <div id="box"></div>
+  <div class="fb" id="fb"></div>
+  <div id="nxw"></div>
+</section>
+
+</main>
+<script>
+const TIME=17000;
+const LV=[
+ {n:"Level 1 – Logické úlohy",d:"Písemná otázka nebo obrázek. Odpověď je celé číslo."},
+ {n:"Level 2 – Kalkulačka",d:"Příklad na displeji, na odpověď máš 17 sekund."},
+ {n:"Level 3 – Tabule",d:"Náhodné otázky z chemie a fyziky."},
+ {n:"Level 2.2 – Rychlé počítání",d:"Cvičení rychlého počítání na náhodně vygenerovaných příkladech."}
+];
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ---------- Obrázkové otázky (Level 1) ---------- */
+function picStars(){
+  const n=R(5,24),cols=6,rows=4,cells=shuffle([...Array(cols*rows).keys()]).slice(0,n);
+  let s='<svg viewBox="0 0 360 240" role="img" aria-label="Hvězdy na papíře">';
+  cells.forEach(c=>{const x=30+(c%cols)*60+R(-8,8),y=30+Math.floor(c/cols)*60+R(-8,8),r=R(13,17),p=[];
+    for(let i=0;i<10;i++){const a=Math.PI*i/5-Math.PI/2,k=i%2?r*.45:r;p.push((x+k*Math.cos(a)).toFixed(1)+","+(y+k*Math.sin(a)).toFixed(1))}
+    s+='<polygon points="'+p.join(" ")+'" fill="#f2b705" stroke="#27304a" stroke-width="1.5" stroke-linejoin="round"/>'});
+  return ["Kolik hvězd je na obrázku?",s+"</svg>",n];
+}
+function picDice(){
+  const k=R(2,4),v=Array.from({length:k},()=>R(1,6)),P={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  let s='<svg viewBox="0 0 '+(k*90+10)+' 100" role="img" aria-label="Hrací kostky">';
+  v.forEach((n,i)=>{const x=10+i*90;s+='<rect x="'+x+'" y="10" width="78" height="78" rx="12" fill="#fff" stroke="#27304a" stroke-width="2.5"/>';
+    P[n].forEach(p=>{s+='<circle cx="'+(x+17+(p%3)*22)+'" cy="'+(27+Math.floor(p/3)*22)+'" r="7" fill="#27304a"/>'})});
+  return ["Jaký je součet teček na všech kostkách?",s+"</svg>",v.reduce((a,b)=>a+b,0)];
+}
+/* =====================  LEVEL 1 – OTÁZKY  =====================
+   Každá otázka je jeden řádek v seznamu D1 níže:
+     ["text otázky", odpověď]                     → jen text
+     ["text otázky", odpověď, "obrazek.png"]      → text + obrázek
+     ["", odpověď, "obrazek.png"]                 → jen obrázek
+   Odpověď je celé číslo bez uvozovek (žádná desetinná tečka).
+   Obrázek: cesta k souboru ve stejné složce jako Einstein.html
+   (např. "img/uloha1.png"), nebo vložený data:image/... řetězec,
+   pokud má být vše v jednom souboru.
+   Řádky odděluj čárkou. Funkce picStars a picDice jsou náhodné
+   obrázky – smaž je ze seznamu, pokud je nechceš.
+   Po změně počtu otázek se pokrok Levelu 1 sám vynuluje.
+   ============================================================= */
+const D1=[
+ ["Kolik dní má týden?",7],["Kolik minut má hodina?",60],["Kolik nohou má pavouk?",8],["Kolik stran má šestiúhelník?",6],
+ ["Kolik je 12 × 12?",144],["Kolik měsíců má rok?",12],["Kolik sekund má minuta?",60],["Kolik je 9 × 8?",72],
+ ["Kolik je 100 − 37?",63],["Kolik hran má krychle?",12],["Kolik je 15 + 28?",43],["Kolik vrcholů má krychle?",8],
+ ["Kolik centimetrů má metr?",100],["Kolik je 7 × 6?",42],["Kolik hodin má den?",24],["Kolik je polovina ze 150?",75],
+ ["Kolik je třetina z 54?",18],["Kolik stěn má kvádr?",6],["Kolik je 1000 − 1?",999],["Kolik dní má nepřestupný únor?",28],
+ ["Kolik gramů má kilogram?",1000],["Kolik je 11 × 11?",121],["Kolik stran má osmiúhelník?",8],["Kolik je 6 × 7 + 8?",50],
+ picStars,picDice
+];
+
+/* ---------- Tabule (Level 3) ---------- */
+const D3=[
+ ["Vlak jede rychlostí 90 km/h. Kolik kilometrů ujede za 4 hodiny?",360],
+ ["Kolik je 15 % ze 480?",72],
+ ["Jaký je součet vnitřních úhlů pětiúhelníku ve stupních?",540],
+ ["Kolik úhlopříček má osmiúhelník?",20],
+ ["Kolik je 2 na desátou?",1024],
+ ["Kolik je 7! (7 faktoriál)?",5040],
+ ["Kolik je prvočísel menších než 30?",10],
+ ["Jaký je největší společný dělitel čísel 84 a 126?",42],
+ ["Jaký je nejmenší společný násobek čísel 12 a 18?",36],
+ ["Kolik je 1 + 2 + 3 + … + 100?",5050],
+ ["Obdélník má strany 35 cm a 15 cm. Jaký je jeho obvod v cm?",100],
+ ["Trojúhelník má základnu 14 cm a výšku 9 cm. Jaký je jeho obsah v cm²?",63],
+ ["Kolik je druhá odmocnina z 2025?",45],
+ ["V kterém roce získal Albert Einstein Nobelovu cenu za fyziku?",1921],
+ ["V kterém roce publikoval Einstein speciální teorii relativity?",1905],
+ ["Kolik je 3 na čtvrtou?",81],
+ ["Kolik je 25 % z 15 % ze 4000?",150],
+ ["Pět dělníků vykope jámu za 12 dnů. Za kolik dnů ji vykope 15 dělníků?",4],
+ ["Kolik je 17 × 23?",391],
+ ["Součet tří po sobě jdoucích čísel je 87. Které je největší?",30],
+ ["Kolik různých pořadí lze sestavit z 5 různých knih?",120],
+ ["Krychle má hranu 6 cm. Jaký je její objem v cm³?",216],
+ ["Kolik je 999 × 11?",10989],
+ ["Cena bundy je 2400 Kč. Po slevě 35 % kolik Kč stojí?",1560],
+ ["Kolik je 5 na třetí mínus 4 na třetí?",61],
+ ["Kolik dvojciferných čísel je dělitelných sedmi?",13],
+ ["Jaké je nejmenší trojciferné prvočíslo?",101],
+ ["Kolik nul je na konci čísla 100! (100 faktoriál)?",24]
+];
+
+/* ---------- Kalkulačka (Level 2) – generátor příkladů ---------- */
+function genEq(){
+  const t=R(0,7);let a,b,c,d;
+  switch(t){
+   case 0:a=R(5,99);b=R(2,12);c=R(2,12);return[a+" + "+b+" × "+c,a+b*c];
+   case 1:a=R(3,40);b=R(3,40);c=R(2,9);return["("+a+" + "+b+") × "+c,(a+b)*c];
+   case 2:a=R(6,19);b=R(6,19);c=R(1,a*b-1);return[a+" × "+b+" − "+c,a*b-c];
+   case 3:a=R(3,12);b=R(3,12);c=R(3,12);d=R(3,12);return[a+" × "+b+" + "+c+" × "+d,a*b+c*d];
+   case 4:a=R(20,60);b=R(1,a-1);c=R(2,12);d=R(2,12);return["("+a+" − "+b+") × ("+c+" + "+d+")",(a-b)*(c+d)];
+   case 5:b=R(2,12);c=R(3,15);d=R(2,9);a=R(2,9);return[(b*c)+" ÷ "+b+" + "+d+" × "+a,c+d*a];
+   case 6:a=R(3,15);b=R(3,15);return[a+"² + "+b+"²",a*a+b*b];
+   default:a=R(2,9);b=R(2,9);c=R(10,99);return[c+" + "+a+"³ − "+b+" × "+b,c+a*a*a-b*b];
+  }
+}
+
+/* ---------- Stav a uložení ---------- */
+const KEY="einstein-v1";
+const mk=(n)=>({w:Array(n).fill(1),score:0,total:0,best:0});
+let P=[mk(D1.length),mk(0),mk(D3.length),mk(0)];
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(s&&Array.isArray(s)&&s.length>=3)[0,1,2,3].forEach(i=>{const n=P[i].w.length;if(s[i]&&Array.isArray(s[i].w)&&s[i].w.length===n)P[i]=s[i]})}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}};
+const $=id=>document.getElementById(id);
+const calc=()=>lv===1||lv===3;
+let gen=0,lv=-1,cur=-1,item=null,locked=true,streak=0,val="",tmr=null,t0=0;
+
+function menu(){
+  gen++;clearInterval(tmr);lv=-1;$("game").hidden=true;$("menu").hidden=false;
+  const L=$("levels");L.innerHTML="";
+  [0,1,3,2].forEach(i=>{const l=LV[i];const b=document.createElement("button");b.className="lvl";
+    const p=P[i];b.innerHTML="<b>"+l.n+"</b><span>"+l.d+"<br>Správně: "+p.score+"/"+p.total+" · rekord série: "+p.best+"</span>";
+    b.onclick=()=>start(i);L.appendChild(b)});
+}
+function start(i){
+  lv=i;streak=0;$("menu").hidden=true;$("game").hidden=false;$("gt").textContent=LV[i].n;
+  $("cap").textContent=i===3?"Další příklad se objeví automaticky po správné odpovědi. Na každý máš 17 sekund.":i===1?"Příklady se generují náhodně. Na každý máš 17 sekund.":"Správně zodpovězené otázky se objevují méně často, chybné častěji.";
+  $("msl").textContent=(i===1||i===3)?"rekord série":"zvládnuto";
+  render();
+}
+function stats(){
+  const p=P[lv];$("sc").textContent=p.score+"/"+p.total;$("st").textContent=streak;
+  if(calc()){$("ms").textContent=p.best;$("bar").style.width="0"}
+  else{const m=p.w.filter(w=>w<.2).length;$("ms").textContent=m+"/"+p.w.length;$("bar").style.width=(m/p.w.length*100)+"%"}
+}
+function pick(){
+  const W=P[lv].w,idx=W.map((_,i)=>i).filter(i=>i!==cur);
+  let r=Math.random()*idx.reduce((a,i)=>a+W[i],0);
+  for(const i of idx){r-=W[i];if(r<=0)return i}return idx[idx.length-1];
+}
+/* jen přidávání číslic na konec – žádné mazání, úpravy, tečka ani čárka */
+function lockInput(inp){
+  let prev="";
+  inp.addEventListener("keydown",e=>{if(["Backspace","Delete","ArrowLeft","Home"].includes(e.key)||((e.ctrlKey||e.metaKey)&&"xzv".includes(e.key.toLowerCase())))e.preventDefault()});
+  inp.addEventListener("input",()=>{
+    const n=inp.value;
+    if(!locked&&n.length===prev.length+1&&n.startsWith(prev)&&/^\d$/.test(n.slice(-1))&&n.length<=12)prev=n;
+    inp.value=prev;inp.setSelectionRange(prev.length,prev.length);
+    if(!locked)check(prev);
+  });
+  ["select","mouseup","focus","touchend"].forEach(ev=>inp.addEventListener(ev,()=>setTimeout(()=>inp.setSelectionRange(inp.value.length,inp.value.length))));
+}
+
+function render(){
+  gen++;locked=false;val="";$("fb").textContent="";$("fb").className="fb";$("nxw").innerHTML="";clearInterval(tmr);
+  const box=$("box");
+  if(calc()){item=genEq();cur=0;
+    box.innerHTML='<div class="calc"><div class="scr"><div class="eq">'+item[0]+' =</div><div class="dsp" id="dsp">0</div><div class="tm"><i id="tb"></i></div><div class="tn" id="tn">17 s</div></div><div class="keys" id="keys"></div></div>';
+    const K=$("keys");
+    [["7"],["8"],["9"],["4"],["5"],["6"],["1"],["2"],["3"],["0","z"]].forEach(([t,c])=>{
+      const b=document.createElement("button");b.className="k"+(c?" "+c:"");b.textContent=t;
+      b.onclick=()=>key(t);K.appendChild(b)});
+    t0=performance.now();tmr=setInterval(tick,100);tick();
+  }else{
+    let q,html,ans;
+    if(lv===0){cur=pick();let e=D1[cur];if(typeof e==="function"){const r=e();q=r[0];html='<div class="qt">'+q+'</div>'+r[1];ans=r[2]}else{q=e[0];html=(q?'<div class="qt">'+q+'</div>':'')+(e[2]?'<img class="pic" src="'+e[2]+'" alt="Obrázek k otázce">':'');ans=e[1]}}
+    else{cur=pick();q=D3[cur][0];ans=D3[cur][1];html='<div class="qt">'+q+'</div>'}
+    item=[q,ans];
+    const cls=lv===0?"paper":"board",ac=lv===0?"pp":"bd";
+    box.innerHTML='<div class="'+cls+'">'+html+'</div><div class="ans '+ac+'"><input id="in" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="Odpověď (celé číslo)" placeholder="?"><button class="b" id="go">Nevím</button></div>';
+    const inp=$("in");lockInput(inp);inp.focus({preventScroll:true});
+    $("go").onclick=()=>{if(!locked)finish(inp.value,"skip")};
+  }
+  stats();
+}
+function key(t){
+  if(locked||val.length>=12)return;
+  val+=t;$("dsp").textContent=val;check(val);
+}
+function check(v){
+  const a=String(item[1]);
+  if(v===a){
+    locked=true;clearInterval(tmr);const g=gen;
+    (calc()?document.querySelector(".scr"):$("in")).classList.add("ok");
+    setTimeout(()=>{if(g===gen){finish(v,"ok");if(lv===3)render()}},500);
+  }else if(v.length>=a.length)finish(v,"wrong");
+}
+function tick(){
+  const left=Math.max(0,TIME-(performance.now()-t0)),b=$("tb");
+  b.style.width=(left/TIME*100)+"%";b.className=left<5000?"low":"";$("tn").textContent=Math.ceil(left/1000)+" s";
+  if(left<=0){clearInterval(tmr);if(!locked)finish(val,"time")}
+}
+function finish(v,kind){
+  locked=true;clearInterval(tmr);
+  const p=P[lv],ok=kind==="ok",fb=$("fb");
+  p.total++;
+  if(ok){p.score++;streak++;p.best=Math.max(p.best,streak);if(!calc())p.w[cur]=Math.max(.05,p.w[cur]*.35);fb.className="fb ok";fb.textContent="Správně!"}
+  else{streak=0;if(!calc())p.w[cur]=Math.min(3,p.w[cur]*2+.5);fb.className="fb ko";
+    fb.textContent=(kind==="time"?"Čas vypršel. ":kind==="wrong"?"Špatně. ":"")+"Správně je: "+item[1]}
+  if(calc())document.querySelectorAll(".k").forEach(k=>k.disabled=true);
+  else{$("in").disabled=true;$("go").disabled=true}
+  save();stats();
+  const n=document.createElement("button");n.className="b p nx";n.textContent="Další otázka →";n.onclick=render;$("nxw").appendChild(n);n.focus({preventScroll:true});
+}
+document.addEventListener("keydown",e=>{
+  if(!calc()||$("game").hidden||locked)return;
+  if(/^\d$/.test(e.key)){key(e.key);e.preventDefault()}
+});
+$("back").onclick=menu;
+$("rsAll").onclick=()=>{if(confirm("Opravdu smazat veškerý pokrok?")){P=[mk(D1.length),mk(0),mk(D3.length),mk(0)];save();menu()}};
+menu();
+</script>
+</body>
+</html>
