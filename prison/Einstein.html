@@ -64,6 +64,7 @@ button{font:inherit;cursor:pointer}
 .keys{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:54px;gap:9px;margin-top:14px}
 .k{border:0;border-radius:10px;background:linear-gradient(#5b5f69,#464a53);color:#fff;font-size:1.4rem;font-family:"Share Tech Mono",ui-monospace,monospace;box-shadow:0 3px 0 #1d1f24}
 .k:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #1d1f24}
+.k.pressed{transform:translateY(2px);box-shadow:0 1px 0 #1d1f24;filter:brightness(1.35)}
 .k.f{background:linear-gradient(#d0703a,#b5592a)}.k.go{background:linear-gradient(#3aa86b,#2b8a54);grid-row:span 2}
 .k.z{grid-column:span 3}
 .scr{transition:background .15s}.scr.ok{background:#8fd19e}
@@ -273,7 +274,7 @@ function render(){
   if(calc()){if(lv===1){cur=pick();item=D2[cur]}else{item=genEq();cur=0}
     box.innerHTML='<div class="calc"><div class="scr"><div class="eq" style="font-size:'+(item[0].length>24?'1.15rem':'1.5rem')+'">'+item[0]+(lv===1?'':' =')+'</div><div class="dsp" id="dsp">0</div><div class="tm"><i id="tb"></i></div><div class="tn" id="tn">17 s</div></div><div class="keys" id="keys"></div></div>';
     const K=$("keys");
-    [["7"],["8"],["9"],["4"],["5"],["6"],["1"],["2"],["3"],["0","z"]].forEach(([t,c])=>{
+    [["1"],["2"],["3"],["4"],["5"],["6"],["7"],["8"],["9"],["0","z"]].forEach(([t,c])=>{
       const b=document.createElement("button");b.className="k"+(c?" "+c:"");b.textContent=t;
       b.onclick=()=>key(t);K.appendChild(b)});
     t0=performance.now();tmr=setInterval(tick,100);tick();
@@ -325,7 +326,10 @@ function finish(v,kind){
 }
 document.addEventListener("keydown",e=>{
   if(!calc()||$("game").hidden||locked)return;
-  if(/^\d$/.test(e.key)){key(e.key);e.preventDefault()}
+  if(/^\d$/.test(e.key)){
+    const b=[...document.querySelectorAll(".k")].find(k=>k.textContent===e.key);
+    if(b&&!e.repeat){b.classList.add("pressed");setTimeout(()=>b.classList.remove("pressed"),130)}
+    key(e.key);e.preventDefault()}
 });
 $("back").onclick=menu;
 $("rsAll").onclick=()=>{if(confirm("Opravdu smazat veškerý pokrok?")){P=[mk(D1.length),mk(D2.length),mk(D3.length),mk(0)];save();menu()}};
