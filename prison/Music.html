@@ -36,6 +36,7 @@ button{font:inherit;cursor:pointer}
 #chips{display:flex;gap:6px;flex-wrap:wrap;min-height:0}
 #chips i{font-style:normal;font-weight:800;padding:2px 12px;border-radius:99px;border:2px solid var(--line);color:var(--mute)}
 #chips i.done{border-color:var(--ok);color:var(--ok)}
+#chips i.dot{min-width:2.2em;height:1.7em;padding:0}
 #chips i.cur{border-color:var(--acc);color:var(--ink);background:var(--panel)}
 .board{position:relative;flex:1;min-height:0;background:var(--board);border-radius:14px;overflow:hidden;
   touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
@@ -191,10 +192,10 @@ function end(id,title,msg){
 async function L1(id){
   const root=60+Math.floor(Math.random()*12),minor=Math.random()<.5;
   const iv=minor?MIN:MAJ,name=`${NN[root%12]} ${minor?'moll':'dur'}`;
-  const slots=shuf([0,1,2,3,4,5,6,7,8]).slice(0,8);
+  const all=shuf([0,1,2,3,4,5,6,7,8]),slots=all.slice(0,8),extra=all[8];
   mkBoard();
-  pads.forEach(p=>p.classList.add('off'));
-  slots.forEach((s,d)=>{setPad(s,root+iv[d]);pads[s].classList.remove('off')});
+  slots.forEach((s,d)=>setPad(s,root+iv[d]));
+  setPad(extra,root+12+iv[1]); /* tón nad stupnicí (2. stupeň o oktávu výš) */
   pads[slots[0]].classList.add('first');
   let pos=0,tries=0;
   demoFn=async id=>{
@@ -269,15 +270,15 @@ async function L3(id,mi){
   const nt=ev.filter(e=>e.m!=null),idx=nt.map(e=>ladder.indexOf(e.m));
   mkBoard();ladder.forEach((m,i)=>setPad(i,m,''));
   let pos=0,miss=0;
-  const chips=(now=-1)=>{$('chips').innerHTML=nt.map((e,i)=>
-    `<i class="${i<pos?'done':i===(now>=0?now:pos)?'cur':''}">${e.n}</i>`).join('')};
+  const chips=(now=-1,names=false)=>{$('chips').innerHTML=nt.map((e,i)=>
+    `<i class="${names?'':'dot '}${i<pos?'done':i===(now>=0?now:pos)?'cur':''}">${names?e.n:''}</i>`).join('')};
   demoFn=async id=>{
     pos=0;handler=null;st(`${M.n} – poslouchej`);let t=0;
     for(const e of ev){
       if(id!==run)return;
       const len=e.d*dur;
       if(e.m==null){await sleep(len);continue}
-      const p=pads[idx[t]];chips(t);
+      const p=pads[idx[t]];chips(t,true);
       tone(e.m,len/1000*.95+.15);p.classList.add('lit');
       const on=Math.max(80,len*.85);await sleep(on);p.classList.remove('lit');await sleep(len-on);t++;
     }
@@ -289,7 +290,7 @@ async function L3(id,mi){
     if(i===idx[pos]){
       flash(i,'ok',150);pos++;chips();st(`${M.n} – ${pos} / ${nt.length}`);
       if(pos===nt.length){handler=null;end(id,'Správně!',`Zahrál jsi melodii: ${M.n}.`+(miss?` Chyb: ${miss}.`:''))}
-    }else{flash(i,'bad',500);miss++;st(`${M.n} – ${pos} / ${nt.length} · to byl ${nm(pads[i].m)}, zkus znovu`)}
+    }else{flash(i,'bad',500);miss++;pos=0;chips();st(`${M.n} – chyba, začni znovu od začátku (0 / ${nt.length})`)}
   }
   chips();await sleep(400);runDemo(id);
 }
