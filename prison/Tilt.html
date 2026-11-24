@@ -65,9 +65,12 @@ select.bad{border-color:var(--bad)}
 /* Režim 4 – Final */
 #final{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
 #final .grid{flex:1 1 66%}
+#prog{flex:none;position:relative;height:clamp(16px,3vh,24px);background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+#progbar{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ok);transition:width .25s}
+#progtxt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 var(--cfs) "Courier New",monospace;color:var(--tx);text-shadow:0 0 3px #000,0 0 3px #000}
 .fcell{min-height:0;position:relative;background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:clamp(2px,.6vw,6px);display:grid;grid-template-rows:minmax(0,1fr) auto;gap:3px;cursor:pointer}
 .fcell .pic{position:relative;min-height:0}
-.fcell .pic .photo{position:absolute;inset:0;object-position:center center}
+.fcell .pic .photo{position:absolute;inset:0;object-fit:contain;object-position:center center}
 .fcell .cn{text-align:center;font:700 var(--cfs) "Courier New",monospace;color:var(--acc)}
 .fcell .ix{position:absolute;top:3px;left:3px;z-index:1;background:rgba(0,0,0,.65);color:var(--tx);border-radius:4px;padding:0 6px;font:700 var(--cfs) "Courier New",monospace}
 .fcell.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
@@ -118,6 +121,7 @@ select.bad{border-color:var(--bad)}
 
 <!-- Režim 4 -->
 <div id="final" hidden>
+  <div id="prog"><div id="progbar"></div><span id="progtxt"></span></div>
   <div class="grid" id="fgrid"></div>
   <div id="flabels"></div>
 </div>
@@ -167,6 +171,7 @@ function photo(id){
 let cm=1;
 
 function mode(m){
+  clearInterval(fTimer);
   cm=m;
   $("quiz").hidden=m!==1;
   $("dnd").hidden=m!==2;
@@ -343,24 +348,53 @@ function startSolution(){
 
 /* ===== Režim 4 – Final ===== */
 
-let CELLS=[],fOrder=[],fLast=null,fSel=null,fMoves=0,fDone=false;
+let CELLS=[],fOrder=[],LBL=[],FT=[],fLast=null,fSel=null,fMoves=0,fDone=false,fT0=0,fEnd=0,fTimer=null;
+
+const fmt=ms=>{
+  const s=Math.floor(ms/1000);
+  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+};
+
+function fProgress(){
+  const n=fOrder.filter((p,i)=>p===CELLS[i]).length;
+  const pct=n*10;
+  $("progbar").style.width=pct+"%";
+  $("progtxt").textContent=pct+" %";
+}
+
+function fStat(){
+  const t=fmt((fDone?fEnd:Date.now())-fT0);
+  $("stat").textContent=fDone?`Hotovo! ${t} · Tahů: ${fMoves}`:`${t} · Tahy ${fMoves} · stisknuto: ${fLast===null?"–":LBL.indexOf(fLast)}`;
+}
 
 const solved=()=>fOrder.every((p,i)=>p===CELLS[i]);
 
-function startFinal(){
-  CELLS=ORDER.flatMap(r=>r.num.map(n=>P.find(x=>x.num==n)));
-  do{fOrder=shuffle(CELLS);}while(solved());
-  fSel=null;fLast=null;fMoves=0;fDone=false;
-
+/* popisky 0-9: pořadí osob je náhodné v každé hře, nick/jméno se přelosuje po každém tahu */
+function drawLabels(){
   const L=$("flabels");
   L.textContent="";
-  CELLS.forEach((p,i)=>{
+  LBL.forEach((p,i)=>{
     const d=document.createElement("div");
     d.className="fl";
-    d.innerHTML=`<span><b>${i}</b>${Math.random()<.5?p.nick:p.name}</span>`;
+    d.innerHTML=`<span><b>${i}</b>${p[FT[i]]}</span>`;
     L.append(d);
   });
+}
 
+function rollLabels(){
+  FT=LBL.map(()=>Math.random()<.5?"nick":"name");
+  drawLabels();
+}
+
+function startFinal(){
+  CELLS=ORDER.flatMap(r=>r.num.map(n=>P.find(x=>x.num==n)));
+  do{fOrder=shuffle(CELLS);}while(fOrder.some((p,i)=>p===CELLS[i])); /* nikdo na správném místě */
+  LBL=shuffle(CELLS);
+  fSel=null;fLast=null;fMoves=0;fDone=false;
+  clearInterval(fTimer);
+  fT0=Date.now();
+  fTimer=setInterval(()=>{if(cm===4&&!fDone)fStat();},250);
+  rollLabels();
   renderFinal();
 }
 
@@ -372,30 +406,32 @@ function renderFinal(){
     d.className="fcell"+(fDone?" done":"");
     const pic=document.createElement("div");
     pic.className="pic";
-    pic.append(photo(fOrder[i].id));
+    pic.append(photo("1"+fOrder[i].id)); /* 11-15 -> 111-115, 21-25 -> 121-125 */
     const cn=document.createElement("div");
     cn.className="cn";
     cn.textContent=c.num;
     d.append(pic,cn);
-    d.onclick=()=>fPick(CELLS.indexOf(fOrder[i]));
+    d.onclick=()=>fPick(fOrder[i]);
     g.append(d);
   });
-  $("stat").textContent=fDone?`Hotovo! Tahů: ${fMoves}`:`Tahy ${fMoves} · stisknuto: ${fLast===null?"–":fLast}`;
+  fProgress();
+  fStat();
 }
 
-function fPick(i){
-  if(fDone)return;
-  fLast=i;
+function fPick(p){
+  if(fDone||!p)return;
+  fLast=p;
   if(fSel===null){
-    fSel=i;
-  }else if(fSel===i){
+    fSel=p;
+  }else if(fSel===p){
     fSel=null;
   }else{
-    const a=fOrder.indexOf(CELLS[fSel]),b=fOrder.indexOf(CELLS[i]);
+    const a=fOrder.indexOf(fSel),b=fOrder.indexOf(p);
     [fOrder[a],fOrder[b]]=[fOrder[b],fOrder[a]];
     fSel=null;
     fMoves++;
-    if(solved())fDone=true;
+    if(solved()){fDone=true;fEnd=Date.now();clearInterval(fTimer);}
+    rollLabels();
   }
   renderFinal();
 }
@@ -405,7 +441,7 @@ $("again").onclick=()=>cm===4?startFinal():startDnd();
 document.addEventListener("keydown",e=>{
   if(cm===1&&e.key==="Enter"){checked?nextQ():check();}
   if(cm===4){
-    if(/^[0-9]$/.test(e.key))fPick(+e.key);
+    if(/^[0-9]$/.test(e.key))fPick(LBL[+e.key]);
     else if(e.key==="Enter"&&fDone)startFinal();
   }
 });
